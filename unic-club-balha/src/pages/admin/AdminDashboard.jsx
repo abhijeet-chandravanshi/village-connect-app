@@ -1,3 +1,4 @@
+import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import { useLanguage } from '../../context/LanguageContext';
@@ -11,30 +12,72 @@ import {
   CheckCircle,
   AlertCircle,
   TrendingUp,
-  ChevronRight
+  ChevronRight,
+  Loader2
 } from 'lucide-react';
-import { 
-  festivals, 
-  contributions, 
-  users,
-  formatCurrency 
-} from '../../data/mockData';
+import { formatCurrency } from '../../data/mockData';
+import { adminService, contributionService } from '../../services';
 
 function AdminDashboard() {
-  const { user, isSuperAdmin } = useAuth();
+  const { user, isSuperAdmin, useBackend } = useAuth();
   const { t, language } = useLanguage();
+  const [stats, setStats] = useState({
+    pendingContributions: 0,
+    totalCollection: 0,
+    activeFestivals: 0,
+    totalMembers: 0
+  });
+  const [recentContributions, setRecentContributions] = useState([]);
+  const [loading, setLoading] = useState(true);
 
   const displayName = language === 'en' ? (user?.nameEn || user?.name) : user?.name;
 
-  // Stats
-  const pendingContributions = contributions.filter(c => c.status === 'pending').length;
-  const verifiedContributions = contributions.filter(c => c.status === 'verified').length;
-  const totalCollection = contributions
-    .filter(c => c.status === 'verified')
-    .reduce((sum, c) => sum + c.amount, 0);
-  const activeFestivals = festivals.filter(f => f.status === 'ongoing').length;
-  const upcomingFestivals = festivals.filter(f => f.status === 'upcoming').length;
-  const totalMembers = users.length;
+  // Fetch stats and recent contributions from backend
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        if (useBackend) {
+          // Fetch admin stats
+          const statsData = await adminService.getStats();
+          setStats({
+            pendingContributions: statsData.pendingContributions || 0,
+            totalCollection: statsData.totalCollection || 0,
+            activeFestivals: statsData.activeFestivals || 0,
+            totalMembers: statsData.totalMembers || 0
+          });
+          
+          // Fetch recent contributions
+          const recentData = await contributionService.getRecent();
+          setRecentContributions(recentData || []);
+        } else {
+          // Fallback to mock data
+          const { festivals, contributions, users } = await import('../../data/mockData');
+          setStats({
+            pendingContributions: contributions.filter(c => c.status === 'pending').length,
+            totalCollection: contributions.filter(c => c.status === 'verified').reduce((sum, c) => sum + c.amount, 0),
+            activeFestivals: festivals.filter(f => f.status === 'ongoing').length,
+            totalMembers: users.length
+          });
+          setRecentContributions(contributions.slice(0, 5));
+        }
+      } catch (error) {
+        console.error('Error fetching admin data:', error);
+        // Fallback to mock data on error
+        const { festivals, contributions, users } = await import('../../data/mockData');
+        setStats({
+          pendingContributions: contributions.filter(c => c.status === 'pending').length,
+          totalCollection: contributions.filter(c => c.status === 'verified').reduce((sum, c) => sum + c.amount, 0),
+          activeFestivals: festivals.filter(f => f.status === 'ongoing').length,
+          totalMembers: users.length
+        });
+        setRecentContributions(contributions.slice(0, 5));
+      } finally {
+        setLoading(false);
+      }
+    };
+    
+    fetchData();
+  }, [useBackend]);
 
   const adminLinks = [
     {
@@ -43,7 +86,7 @@ function AdminDashboard() {
       icon: CheckCircle,
       to: '/admin/verify-contributions',
       color: 'primary',
-      badge: pendingContributions
+      badge: stats.pendingContributions
     },
     {
       title: t('admin.manageFestivals'),
@@ -104,6 +147,15 @@ function AdminDashboard() {
     return colors[color] || colors.primary;
   };
 
+  if (loading) {
+    return (
+      <div className="max-w-7xl mx-auto px-4 py-12 text-center">
+        <Loader2 className="w-8 h-8 animate-spin mx-auto text-primary-500" />
+        <p className="text-earth-500 dark:text-earth-400 mt-4">{t('common.loading')}</p>
+      </div>
+    );
+  }
+
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
       {/* Header */}
@@ -125,7 +177,7 @@ function AdminDashboard() {
                 <AlertCircle className="w-6 h-6 text-saffron-600 dark:text-saffron-400" />
               </div>
               <div>
-                <p className="text-2xl font-bold text-earth-900 dark:text-cream-100">{pendingContributions}</p>
+                <p className="text-2xl font-bold text-earth-900 dark:text-cream-100">{stats.pendingContributions}</p>
                 <p className="text-xs text-earth-500 dark:text-earth-400">{t('contributions.pending')}</p>
               </div>
             </div>
@@ -139,7 +191,7 @@ function AdminDashboard() {
                 <TrendingUp className="w-6 h-6 text-leaf-600 dark:text-leaf-400" />
               </div>
               <div>
-                <p className="text-xl font-bold text-earth-900 dark:text-cream-100">{formatCurrency(totalCollection)}</p>
+                <p className="text-xl font-bold text-earth-900 dark:text-cream-100">{formatCurrency(stats.totalCollection)}</p>
                 <p className="text-xs text-earth-500 dark:text-earth-400">{t('festivals.collection')}</p>
               </div>
             </div>
@@ -153,7 +205,7 @@ function AdminDashboard() {
                 <Calendar className="w-6 h-6 text-primary-600 dark:text-primary-400" />
               </div>
               <div>
-                <p className="text-2xl font-bold text-earth-900 dark:text-cream-100">{activeFestivals}</p>
+                <p className="text-2xl font-bold text-earth-900 dark:text-cream-100">{stats.activeFestivals}</p>
                 <p className="text-xs text-earth-500 dark:text-earth-400">{t('festivals.ongoing')}</p>
               </div>
             </div>
@@ -167,7 +219,7 @@ function AdminDashboard() {
                 <Users className="w-6 h-6 text-earth-600 dark:text-earth-400" />
               </div>
               <div>
-                <p className="text-2xl font-bold text-earth-900 dark:text-cream-100">{totalMembers}</p>
+                <p className="text-2xl font-bold text-earth-900 dark:text-cream-100">{stats.totalMembers}</p>
                 <p className="text-xs text-earth-500 dark:text-earth-400">{t('home.members')}</p>
               </div>
             </div>
@@ -216,36 +268,43 @@ function AdminDashboard() {
           </h2>
         </div>
         <div className="divide-y divide-cream-100 dark:divide-earth-700">
-          {contributions.slice(0, 5).map((contrib) => {
-            const contribName = language === 'en' ? (contrib.userNameEn || contrib.userName) : contrib.userName;
-            const festName = language === 'en' ? (contrib.festivalNameEn || contrib.festivalName) : contrib.festivalName;
-            return (
-              <div key={contrib.id} className="p-4 flex items-center justify-between">
-                <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-full bg-primary-100 dark:bg-primary-900/40 flex items-center justify-center text-primary-700 dark:text-primary-300 font-semibold">
-                    {contribName[0]}
+          {recentContributions.length > 0 ? (
+            recentContributions.map((contrib) => {
+              const contribName = language === 'en' ? (contrib.userNameEn || contrib.userName) : contrib.userName;
+              const festName = language === 'en' ? (contrib.festivalNameEn || contrib.festivalName) : contrib.festivalName;
+              const status = contrib.status?.toLowerCase() || 'pending';
+              return (
+                <div key={contrib.id} className="p-4 flex items-center justify-between">
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 rounded-full bg-primary-100 dark:bg-primary-900/40 flex items-center justify-center text-primary-700 dark:text-primary-300 font-semibold">
+                      {contribName?.[0] || '?'}
+                    </div>
+                    <div>
+                      <p className="font-medium text-earth-900 dark:text-cream-100">
+                        {contribName || 'Unknown'}
+                      </p>
+                      <p className="text-sm text-earth-500 dark:text-earth-400">
+                        {festName || 'Unknown Festival'}
+                      </p>
+                    </div>
                   </div>
-                  <div>
-                    <p className="font-medium text-earth-900 dark:text-cream-100">
-                      {contribName}
+                  <div className="text-right">
+                    <p className="font-semibold text-earth-900 dark:text-cream-100">
+                      {formatCurrency(contrib.amount)}
                     </p>
-                    <p className="text-sm text-earth-500 dark:text-earth-400">
-                      {festName}
-                    </p>
+                    <Badge variant={status} size="sm">
+                      {status === 'pending' ? t('contributions.pending') : 
+                       status === 'verified' ? t('contributions.verified') : t('contributions.rejected')}
+                    </Badge>
                   </div>
                 </div>
-                <div className="text-right">
-                  <p className="font-semibold text-earth-900 dark:text-cream-100">
-                    {formatCurrency(contrib.amount)}
-                  </p>
-                  <Badge variant={contrib.status} size="sm">
-                    {contrib.status === 'pending' ? t('contributions.pending') : 
-                     contrib.status === 'verified' ? t('contributions.verified') : t('contributions.rejected')}
-                  </Badge>
-                </div>
-              </div>
-            );
-          })}
+              );
+            })
+          ) : (
+            <div className="p-8 text-center text-earth-500 dark:text-earth-400">
+              {t('admin.noRecentActivity')}
+            </div>
+          )}
         </div>
       </Card>
     </div>

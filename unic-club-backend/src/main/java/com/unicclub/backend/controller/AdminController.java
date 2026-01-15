@@ -38,6 +38,7 @@ public class AdminController {
         stats.put("totalFestivals", festivalService.getAllFestivals().size());
         stats.put("pendingContributions", contributionService.countPendingContributions());
         stats.put("activeFestivals", festivalService.getActiveFestivals().size());
+        stats.put("totalCollection", festivalService.getTotalVerifiedCollection());
         
         return ResponseEntity.ok(ApiResponse.success(stats));
     }

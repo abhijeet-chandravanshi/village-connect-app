@@ -31,6 +31,20 @@ function Profile() {
 
   const displayName = language === 'en' ? (user?.nameEn || user?.name) : user?.name;
   const displayWard = language === 'en' ? (user?.wardEn || user?.ward) : user?.ward;
+  
+  // Get initials from name (works for both Hindi and English)
+  const getInitials = (name) => {
+    if (!name) return 'U';
+    const words = name.trim().split(/\s+/);
+    if (words.length === 1) {
+      // Single word - return first character
+      return [...words[0]][0] || 'U';
+    }
+    // Multiple words - return first letter of first and last word
+    const first = [...words[0]][0] || '';
+    const last = [...words[words.length - 1]][0] || '';
+    return first + last;
+  };
 
   const handleSave = async () => {
     setLoading(true);
@@ -85,13 +99,9 @@ function Profile() {
         <div className="p-4 md:p-6">
           {/* Avatar & Name */}
           <div className="flex items-center gap-4 mb-6">
-            <div className="w-20 h-20 rounded-full bg-gradient-to-br from-primary-400 to-saffron-400 flex items-center justify-center text-white text-3xl font-bold shadow-warm">
-              {/* Display only first character (even for Hindi) */} 
-              {
-                displayName
-                  ? [...displayName][0] // handles Unicode/emoji/Hindi correctly
-                  : 'U'
-              }
+            <div className="w-20 h-20 rounded-full bg-gradient-to-br from-primary-400 to-saffron-400 flex items-center justify-center text-white text-2xl font-bold shadow-warm">
+              {/* Display initials - works for Hindi and English */}
+              {getInitials(displayName || user?.name || user?.nameEn)}
             </div>
             <div>
               <h2 className="text-xl font-semibold text-earth-900 dark:text-cream-100">

@@ -101,6 +101,18 @@ public class FestivalService {
         return festivalRepository.findDistinctYears();
     }
     
+    /**
+     * Get total verified collection across all festivals
+     */
+    public BigDecimal getTotalVerifiedCollection() {
+        return festivalRepository.findAll().stream()
+                .map(festival -> {
+                    BigDecimal collection = contributionRepository.sumVerifiedAmountByFestival(festival);
+                    return collection != null ? collection : BigDecimal.ZERO;
+                })
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
+    }
+    
     @Transactional
     public void updateFestivalTotals(Long festivalId) {
         Festival festival = findById(festivalId);

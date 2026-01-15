@@ -23,7 +23,7 @@ public interface ContributionRepository extends JpaRepository<Contribution, Long
     
     List<Contribution> findByStatus(Contribution.Status status);
     
-    @Query("SELECT c FROM Contribution c WHERE c.status = 'PENDING' ORDER BY c.createdAt ASC")
+    @Query("SELECT c FROM Contribution c JOIN FETCH c.user JOIN FETCH c.festival WHERE c.status = 'PENDING' ORDER BY c.createdAt ASC")
     List<Contribution> findPendingContributions();
     
     @Query("SELECT SUM(c.amount) FROM Contribution c WHERE c.festival = :festival AND c.status = 'VERIFIED'")
@@ -35,7 +35,7 @@ public interface ContributionRepository extends JpaRepository<Contribution, Long
     @Query("SELECT SUM(c.amount) FROM Contribution c WHERE c.user = :user AND c.status = 'VERIFIED'")
     BigDecimal sumVerifiedAmountByUser(User user);
     
-    @Query("SELECT c FROM Contribution c ORDER BY c.createdAt DESC")
+    @Query("SELECT c FROM Contribution c JOIN FETCH c.user JOIN FETCH c.festival ORDER BY c.createdAt DESC")
     List<Contribution> findRecentContributions();
     
     boolean existsByUserAndFestival(User user, Festival festival);

@@ -58,6 +58,7 @@ public class ContributionService {
         return ContributionResponse.fromEntity(contributionRepository.save(contribution));
     }
     
+    @Transactional(readOnly = true)
     public List<ContributionResponse> getUserContributions(Long userId) {
         User user = userService.findById(userId);
         return contributionRepository.findByUserOrderByCreatedAtDesc(user).stream()
@@ -65,6 +66,7 @@ public class ContributionService {
                 .collect(Collectors.toList());
     }
     
+    @Transactional(readOnly = true)
     public List<ContributionResponse> getFestivalContributions(Long festivalId) {
         Festival festival = festivalService.findById(festivalId);
         return contributionRepository.findByFestival(festival).stream()
@@ -72,6 +74,7 @@ public class ContributionService {
                 .collect(Collectors.toList());
     }
     
+    @Transactional(readOnly = true)
     public List<ContributionResponse> getFestivalVerifiedContributions(Long festivalId) {
         Festival festival = festivalService.findById(festivalId);
         return contributionRepository.findByFestivalAndStatus(festival, Contribution.Status.VERIFIED).stream()
@@ -79,12 +82,14 @@ public class ContributionService {
                 .collect(Collectors.toList());
     }
     
+    @Transactional(readOnly = true)
     public List<ContributionResponse> getPendingContributions() {
         return contributionRepository.findPendingContributions().stream()
                 .map(ContributionResponse::fromEntity)
                 .collect(Collectors.toList());
     }
     
+    @Transactional(readOnly = true)
     public List<ContributionResponse> getRecentContributions() {
         return contributionRepository.findRecentContributions().stream()
                 .limit(10)
