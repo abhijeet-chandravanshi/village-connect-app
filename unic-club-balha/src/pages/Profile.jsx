@@ -86,7 +86,12 @@ function Profile() {
           {/* Avatar & Name */}
           <div className="flex items-center gap-4 mb-6">
             <div className="w-20 h-20 rounded-full bg-gradient-to-br from-primary-400 to-saffron-400 flex items-center justify-center text-white text-3xl font-bold shadow-warm">
-              {displayName?.[0]?.toUpperCase() || 'U'}
+              {/* Display only first character (even for Hindi) */} 
+              {
+                displayName
+                  ? [...displayName][0] // handles Unicode/emoji/Hindi correctly
+                  : 'U'
+              }
             </div>
             <div>
               <h2 className="text-xl font-semibold text-earth-900 dark:text-cream-100">

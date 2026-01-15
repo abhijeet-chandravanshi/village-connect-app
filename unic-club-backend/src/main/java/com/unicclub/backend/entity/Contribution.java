@@ -2,7 +2,6 @@ package com.unicclub.backend.entity;
 
 import jakarta.persistence.*;
 import jakarta.persistence.Basic;
-import jakarta.persistence.Lob;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.EqualsAndHashCode;
@@ -54,7 +53,6 @@ public class Contribution {
     private String proofImageUrl;
     
     // Secure byte array storage for payment proof images
-    @Lob
     @Basic(fetch = FetchType.LAZY)
     @Column(name = "proof_image_data", columnDefinition = "BYTEA")
     private byte[] proofImageData;

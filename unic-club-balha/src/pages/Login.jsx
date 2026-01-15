@@ -12,7 +12,7 @@ function Login() {
   const [step, setStep] = useState('phone'); // 'phone' | 'otp'
   const [loading, setLoading] = useState(false);
   
-  const { sendOTP, verifyOTP } = useAuth();
+  const { sendOTP, verifyOTP, useFirebaseAuth } = useAuth();
   const { t, language, setLanguage } = useLanguage();
   const navigate = useNavigate();
 
@@ -110,6 +110,7 @@ function Login() {
                 </div>
 
                 <Button 
+                  id="send-otp-button"
                   type="submit" 
                   loading={loading} 
                   className="w-full"
@@ -117,6 +118,9 @@ function Login() {
                 >
                   {t('login.sendOtp')}
                 </Button>
+                
+                {/* Invisible reCAPTCHA container for Firebase Phone Auth */}
+                <div id="recaptcha-container"></div>
               </form>
             ) : (
               <form onSubmit={handleVerifyOTP} className="space-y-5">
@@ -142,9 +146,11 @@ function Login() {
                   />
                 </div>
 
-                <p className="text-sm text-center text-earth-500 dark:text-earth-400">
-                  Demo OTP: <span className="font-mono font-semibold">123456</span>
-                </p>
+                {!useFirebaseAuth && (
+                  <p className="text-sm text-center text-earth-500 dark:text-earth-400">
+                    Demo OTP: <span className="font-mono font-semibold">123456</span>
+                  </p>
+                )}
 
                 <Button 
                   type="submit" 

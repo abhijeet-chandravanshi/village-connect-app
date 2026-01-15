@@ -1,5 +1,15 @@
 import { createContext, useContext, useState, useEffect } from 'react';
 import { authService, userService } from '../services';
+import { 
+  sendOTP as firebaseSendOTP, 
+  verifyOTP as firebaseVerifyOTP,
+  signOut as firebaseSignOut,
+  initRecaptcha
+} from '../services/firebaseAuth';
+
+// Configuration: Set to true to use Firebase Phone Auth (free OTP)
+// Set to false to use backend OTP (requires SMS service)
+const USE_FIREBASE_AUTH = import.meta.env.VITE_USE_FIREBASE_AUTH === 'true';
 
 const AuthContext = createContext(null);
 
@@ -106,6 +116,22 @@ export function AuthProvider({ children }) {
   const sendOTP = async (phone) => {
     setPhoneNumber(phone);
     
+    // Use Firebase Phone Auth if configured
+    if (USE_FIREBASE_AUTH) {
+      try {
+        // Initialize reCAPTCHA before sending OTP
+        initRecaptcha('send-otp-button');
+        const result = await firebaseSendOTP(phone);
+        if (result.success) {
+          setOtpSent(true);
+        }
+        return result;
+      } catch (error) {
+        console.error('Firebase OTP error:', error);
+        return { success: false, message: error.message || 'Failed to send OTP' };
+      }
+    }
+    
     if (useBackend) {
       const result = await authService.sendOtp(phone);
       if (result.success) {
@@ -122,6 +148,38 @@ export function AuthProvider({ children }) {
 
   // Verify OTP
   const verifyOTP = async (otp) => {
+    // Use Firebase Phone Auth if configured
+    if (USE_FIREBASE_AUTH) {
+      try {
+        const result = await firebaseVerifyOTP(otp);
+        if (result.success) {
+          // Map Firebase user to app user format
+          const appUser = {
+            id: result.user?.id || result.user?.firebaseUid || Date.now().toString(),
+            phone: phoneNumber,
+            name: result.user?.name || '',
+            nameEn: result.user?.nameEn || '',
+            role: result.user?.role || 'user',
+            ward: result.user?.ward || '',
+            wardEn: result.user?.wardEn || '',
+            dateOfBirth: result.user?.dateOfBirth || '',
+            avatar: result.user?.avatar || null,
+            isNewUser: result.isNewUser,
+            firebaseUid: result.user?.firebaseUid,
+          };
+          
+          setUser(appUser);
+          localStorage.setItem('unicclub_user', JSON.stringify(appUser));
+          setOtpSent(false);
+          return { success: true, user: appUser, isNewUser: result.isNewUser };
+        }
+        return result;
+      } catch (error) {
+        console.error('Firebase verify error:', error);
+        return { success: false, message: error.message || 'Invalid OTP' };
+      }
+    }
+    
     if (useBackend) {
       const result = await authService.verifyOtp(phoneNumber, otp);
       if (result.success) {
@@ -177,7 +235,16 @@ export function AuthProvider({ children }) {
   };
 
   // Logout
-  const logout = () => {
+  const logout = async () => {
+    // Sign out from Firebase if using Firebase auth
+    if (USE_FIREBASE_AUTH) {
+      try {
+        await firebaseSignOut();
+      } catch (error) {
+        console.error('Firebase sign out error:', error);
+      }
+    }
+    
     authService.logout();
     setUser(null);
     setOtpSent(false);
@@ -199,6 +266,7 @@ export function AuthProvider({ children }) {
     isAdmin,
     isSuperAdmin,
     useBackend,
+    useFirebaseAuth: USE_FIREBASE_AUTH,
     sendOTP,
     verifyOTP,
     updateProfile,
