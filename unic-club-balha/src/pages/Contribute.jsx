@@ -186,7 +186,7 @@ function Contribute() {
       <Card className="mb-6">
         <div className="p-4 flex items-center gap-4">
           <img 
-            src={festival.image} 
+            src={festival.imageUrl || festival.image || 'https://images.unsplash.com/photo-1574265040831-67b58fc79036?w=800'} 
             alt={festival.name}
             className="w-16 h-16 rounded-xl object-cover"
           />

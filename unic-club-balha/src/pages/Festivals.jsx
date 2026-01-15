@@ -138,7 +138,7 @@ function Festivals() {
                 <Card hoverable className="h-full overflow-hidden">
                   <div className="relative h-40">
                     <img 
-                      src={festival.image} 
+                      src={festival.imageUrl || festival.image || 'https://images.unsplash.com/photo-1574265040831-67b58fc79036?w=800'} 
                       alt={displayName}
                       className="w-full h-full object-cover"
                     />

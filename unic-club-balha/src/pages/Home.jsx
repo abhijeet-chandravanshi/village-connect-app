@@ -162,7 +162,7 @@ function Home() {
                 <Card hoverable className="h-full">
                   <div className="flex">
                     <img 
-                      src={festival.image} 
+                      src={festival.imageUrl || festival.image || 'https://images.unsplash.com/photo-1574265040831-67b58fc79036?w=800'} 
                       alt={festival.name}
                       className="w-24 h-24 object-cover rounded-l-2xl"
                     />

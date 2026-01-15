@@ -98,7 +98,7 @@ function FestivalDetail() {
       <Card className="mb-6 overflow-hidden">
         <div className="relative h-48 md:h-64">
           <img 
-            src={festival.image} 
+            src={festival.imageUrl || festival.image || 'https://images.unsplash.com/photo-1574265040831-67b58fc79036?w=800'} 
             alt={displayName}
             className="w-full h-full object-cover"
           />
