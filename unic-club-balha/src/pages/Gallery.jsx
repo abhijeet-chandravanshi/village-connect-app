@@ -1,20 +1,66 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useLanguage } from '../context/LanguageContext';
+import { useAuth } from '../context/AuthContext';
 import { Card, Modal, Button } from '../components/ui';
 import { 
   Image as ImageIcon, 
   X, 
   Download, 
   Calendar,
-  SlidersHorizontal 
+  SlidersHorizontal,
+  Loader2
 } from 'lucide-react';
-import { galleryImages, festivals } from '../data/mockData';
+import { galleryService, festivalService } from '../services';
 
 function Gallery() {
   const { t, language } = useLanguage();
+  const { useBackend } = useAuth();
   const [selectedImage, setSelectedImage] = useState(null);
   const [yearFilter, setYearFilter] = useState('all');
   const [festivalFilter, setFestivalFilter] = useState('all');
+  const [galleryImages, setGalleryImages] = useState([]);
+  const [festivals, setFestivals] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  // Fetch gallery images and festivals
+  useEffect(() => {
+    fetchData();
+  }, [useBackend]);
+
+  const fetchData = async () => {
+    try {
+      if (useBackend) {
+        // Try to fetch from API
+        try {
+          const [imagesData, festivalsData] = await Promise.all([
+            galleryService.getAll(),
+            festivalService.getAll()
+          ]);
+          setGalleryImages(imagesData || []);
+          setFestivals(festivalsData || []);
+        } catch (apiError) {
+          console.log('API call failed, using mock data:', apiError);
+          // Fall back to mock data if API not available
+          const mockData = await import('../data/mockData');
+          setGalleryImages(mockData.galleryImages);
+          setFestivals(mockData.festivals);
+        }
+      } else {
+        // Use mock data
+        const mockData = await import('../data/mockData');
+        setGalleryImages(mockData.galleryImages);
+        setFestivals(mockData.festivals);
+      }
+    } catch (error) {
+      console.error('Error fetching gallery data:', error);
+      // Fallback to mock data on any error
+      const mockData = await import('../data/mockData');
+      setGalleryImages(mockData.galleryImages);
+      setFestivals(mockData.festivals);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const years = [...new Set(galleryImages.map(img => img.year))].sort((a, b) => b - a);
 
@@ -32,6 +78,16 @@ function Gallery() {
     link.click();
     document.body.removeChild(link);
   };
+
+  // Loading state
+  if (loading) {
+    return (
+      <div className="max-w-7xl mx-auto px-4 py-12 text-center">
+        <Loader2 className="w-8 h-8 animate-spin mx-auto text-primary-500" />
+        <p className="text-earth-500 dark:text-earth-400 mt-4">{t('common.loading')}</p>
+      </div>
+    );
+  }
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">

@@ -47,6 +47,7 @@ public class SecurityConfig {
                 // Public read endpoints
                 .requestMatchers(HttpMethod.GET, "/api/festivals/**").permitAll()
                 .requestMatchers(HttpMethod.GET, "/api/gallery/**").permitAll()
+                .requestMatchers(HttpMethod.GET, "/api/expenses/**").permitAll()
                 
                 // Admin endpoints
                 .requestMatchers("/api/admin/**").hasAnyRole("ADMIN", "SUPER_ADMIN")

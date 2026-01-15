@@ -1,24 +1,54 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { useLanguage } from '../../context/LanguageContext';
+import { useAuth } from '../../context/AuthContext';
 import { Card, Button, Input } from '../../components/ui';
 import { 
   ArrowLeft,
   Upload, 
   X,
   Image as ImageIcon,
-  CheckCircle
+  CheckCircle,
+  Loader2
 } from 'lucide-react';
 import toast from 'react-hot-toast';
-import { festivals } from '../../data/mockData';
+import { festivalService, imageService } from '../../services';
 
 function UploadPhotos() {
   const { t, language } = useLanguage();
+  const { useBackend } = useAuth();
   const [selectedFestival, setSelectedFestival] = useState('');
   const [caption, setCaption] = useState('');
   const [images, setImages] = useState([]);
   const [loading, setLoading] = useState(false);
   const [uploadSuccess, setUploadSuccess] = useState(false);
+  const [festivals, setFestivals] = useState([]);
+  const [fetchingFestivals, setFetchingFestivals] = useState(true);
+
+  // Fetch festivals from backend
+  useEffect(() => {
+    const fetchFestivals = async () => {
+      try {
+        if (useBackend) {
+          const data = await festivalService.getAll();
+          setFestivals(data || []);
+        } else {
+          // Fallback to mock data
+          const { festivals: mockFestivals } = await import('../../data/mockData');
+          setFestivals(mockFestivals);
+        }
+      } catch (error) {
+        console.error('Error fetching festivals:', error);
+        // Fallback to mock data on error
+        const { festivals: mockFestivals } = await import('../../data/mockData');
+        setFestivals(mockFestivals);
+      } finally {
+        setFetchingFestivals(false);
+      }
+    };
+    
+    fetchFestivals();
+  }, [useBackend]);
 
   const handleImageSelect = (e) => {
     const files = Array.from(e.target.files);
@@ -59,10 +89,46 @@ function UploadPhotos() {
     }
 
     setLoading(true);
-    await new Promise(resolve => setTimeout(resolve, 2000));
-    setLoading(false);
-    setUploadSuccess(true);
-    toast.success(t('admin.uploadSuccess'));
+    try {
+      if (useBackend) {
+        // Get selected festival details for year and event name
+        const festival = festivals.find(f => f.id.toString() === selectedFestival.toString());
+        const year = festival?.year || new Date().getFullYear();
+        const eventName = festival?.nameEn || festival?.name || 'general';
+
+        // Upload each image to Cloudinary via backend
+        let successCount = 0;
+        let failCount = 0;
+
+        for (const img of images) {
+          try {
+            await imageService.uploadGalleryImage(img.file, year, eventName);
+            successCount++;
+          } catch (uploadError) {
+            console.error('Error uploading image:', img.name, uploadError);
+            failCount++;
+          }
+        }
+
+        if (successCount > 0) {
+          toast.success(`${successCount} ${t('admin.photosUploaded')}`);
+          setUploadSuccess(true);
+        }
+        if (failCount > 0) {
+          toast.error(`${failCount} ${t('admin.photosFailedToUpload')}`);
+        }
+      } else {
+        // Mock implementation
+        await new Promise(resolve => setTimeout(resolve, 2000));
+        toast.success(t('admin.uploadSuccess'));
+        setUploadSuccess(true);
+      }
+    } catch (error) {
+      console.error('Error uploading photos:', error);
+      toast.error(error.message || t('common.error'));
+    } finally {
+      setLoading(false);
+    }
   };
 
   const handleReset = () => {
@@ -72,6 +138,16 @@ function UploadPhotos() {
     setImages([]);
     setUploadSuccess(false);
   };
+
+  // Loading state for festivals
+  if (fetchingFestivals) {
+    return (
+      <div className="max-w-3xl mx-auto px-4 py-12 text-center">
+        <Loader2 className="w-8 h-8 animate-spin mx-auto text-primary-500" />
+        <p className="text-earth-500 dark:text-earth-400 mt-4">{t('common.loading')}</p>
+      </div>
+    );
+  }
 
   return (
     <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 py-6">

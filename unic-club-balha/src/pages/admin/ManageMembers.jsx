@@ -1,6 +1,7 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { useLanguage } from '../../context/LanguageContext';
+import { useAuth } from '../../context/AuthContext';
 import { Card, Badge, Button, Modal } from '../../components/ui';
 import { 
   ArrowLeft,
@@ -9,16 +10,46 @@ import {
   Shield,
   Phone,
   Calendar,
-  MapPin
+  MapPin,
+  Loader2
 } from 'lucide-react';
 import toast from 'react-hot-toast';
-import { users, formatDate } from '../../data/mockData';
+import { formatDate } from '../../data/mockData';
+import { adminService } from '../../services';
 
 function ManageMembers() {
   const { t, language } = useLanguage();
+  const { useBackend } = useAuth();
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedMember, setSelectedMember] = useState(null);
   const [loading, setLoading] = useState(false);
+  const [users, setUsers] = useState([]);
+  const [fetchingUsers, setFetchingUsers] = useState(true);
+
+  // Fetch members from backend
+  useEffect(() => {
+    fetchMembers();
+  }, [useBackend]);
+
+  const fetchMembers = async () => {
+    try {
+      if (useBackend) {
+        const data = await adminService.getMembers();
+        setUsers(data || []);
+      } else {
+        // Fallback to mock data
+        const { users: mockUsers } = await import('../../data/mockData');
+        setUsers(mockUsers);
+      }
+    } catch (error) {
+      console.error('Error fetching members:', error);
+      // Fallback to mock data on error
+      const { users: mockUsers } = await import('../../data/mockData');
+      setUsers(mockUsers);
+    } finally {
+      setFetchingUsers(false);
+    }
+  };
 
   const filteredUsers = users.filter(u => {
     const searchName = language === 'en' ? (u.nameEn || u.name) : u.name;
@@ -39,11 +70,35 @@ function ManageMembers() {
 
   const handleRoleChange = async (userId, newRole) => {
     setLoading(true);
-    await new Promise(resolve => setTimeout(resolve, 1000));
-    toast.success(t('admin.roleUpdated'));
-    setLoading(false);
-    setSelectedMember(null);
+    try {
+      if (useBackend) {
+        await adminService.updateMemberRole(userId, newRole.toUpperCase());
+        // Refresh members list
+        await fetchMembers();
+        toast.success(t('admin.roleUpdated'));
+      } else {
+        // Mock implementation
+        await new Promise(resolve => setTimeout(resolve, 1000));
+        toast.success(t('admin.roleUpdated'));
+      }
+    } catch (error) {
+      console.error('Error updating role:', error);
+      toast.error(error.message || t('common.error'));
+    } finally {
+      setLoading(false);
+      setSelectedMember(null);
+    }
   };
+
+  // Loading state for users
+  if (fetchingUsers) {
+    return (
+      <div className="max-w-4xl mx-auto px-4 py-12 text-center">
+        <Loader2 className="w-8 h-8 animate-spin mx-auto text-primary-500" />
+        <p className="text-earth-500 dark:text-earth-400 mt-4">{t('common.loading')}</p>
+      </div>
+    );
+  }
 
   return (
     <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-6">

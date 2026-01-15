@@ -1,5 +1,6 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useLanguage } from '../context/LanguageContext';
+import { useAuth } from '../context/AuthContext';
 import { Card, Badge, Button } from '../components/ui';
 import { 
   Bell, 
@@ -8,13 +9,41 @@ import {
   IndianRupee, 
   Megaphone,
   CheckCircle,
-  Circle
+  Circle,
+  Loader2
 } from 'lucide-react';
-import { notifications } from '../data/mockData';
+import { notificationService } from '../services';
 
 function Notifications() {
   const { t, language } = useLanguage();
-  const [notifList, setNotifList] = useState(notifications);
+  const { useBackend } = useAuth();
+  const [notifList, setNotifList] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  // Fetch notifications from backend
+  useEffect(() => {
+    const fetchNotifications = async () => {
+      try {
+        if (useBackend) {
+          const data = await notificationService.getMyNotifications();
+          setNotifList(data || []);
+        } else {
+          // Fallback to mock data
+          const { notifications: mockNotifications } = await import('../data/mockData');
+          setNotifList(mockNotifications);
+        }
+      } catch (error) {
+        console.error('Error fetching notifications:', error);
+        // Fallback to mock data on error
+        const { notifications: mockNotifications } = await import('../data/mockData');
+        setNotifList(mockNotifications);
+      } finally {
+        setLoading(false);
+      }
+    };
+    
+    fetchNotifications();
+  }, [useBackend]);
 
   const getIcon = (type) => {
     switch (type) {
@@ -42,14 +71,34 @@ function Notifications() {
     }
   };
 
-  const markAsRead = (id) => {
+  const markAsRead = async (id) => {
+    // Optimistic update
     setNotifList(notifList.map(n => 
       n.id === id ? { ...n, isRead: true } : n
     ));
+    
+    // Call API
+    if (useBackend) {
+      try {
+        await notificationService.markAsRead(id);
+      } catch (error) {
+        console.error('Error marking notification as read:', error);
+      }
+    }
   };
 
-  const markAllRead = () => {
+  const markAllRead = async () => {
+    // Optimistic update
     setNotifList(notifList.map(n => ({ ...n, isRead: true })));
+    
+    // Call API
+    if (useBackend) {
+      try {
+        await notificationService.markAllAsRead();
+      } catch (error) {
+        console.error('Error marking all notifications as read:', error);
+      }
+    }
   };
 
   const unreadCount = notifList.filter(n => !n.isRead).length;
@@ -66,6 +115,16 @@ function Notifications() {
     if (hours < 24) return `${hours} ${language === 'hi' ? 'घंटे पहले' : 'hours ago'}`;
     return `${days} ${language === 'hi' ? 'दिन पहले' : 'days ago'}`;
   };
+
+  // Loading state
+  if (loading) {
+    return (
+      <div className="max-w-3xl mx-auto px-4 py-12 text-center">
+        <Loader2 className="w-8 h-8 animate-spin mx-auto text-primary-500" />
+        <p className="text-earth-500 dark:text-earth-400 mt-4">{t('common.loading')}</p>
+      </div>
+    );
+  }
 
   return (
     <div className="max-w-3xl mx-auto px-4 sm:px-6 py-6">

@@ -1,6 +1,7 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Link, useParams } from 'react-router-dom';
 import { useLanguage } from '../context/LanguageContext';
+import { useAuth } from '../context/AuthContext';
 import { Card, Badge, Button } from '../components/ui';
 import { 
   ArrowLeft,
@@ -9,61 +10,151 @@ import {
   TrendingDown,
   Users,
   Calendar,
-  PieChart
+  PieChart,
+  Loader2
 } from 'lucide-react';
-import { 
-  festivals, 
-  contributions, 
-  expenses, 
-  formatCurrency, 
-  formatDate 
-} from '../data/mockData';
+import { formatCurrency, formatDate } from '../data/mockData';
+import { festivalService, contributionService, expenseService } from '../services';
 
 function Transparency() {
   const { festivalId } = useParams();
   const { t, language } = useLanguage();
+  const { useBackend } = useAuth();
   const [activeTab, setActiveTab] = useState('overview');
+  const [loading, setLoading] = useState(true);
+  const [festival, setFestival] = useState(null);
+  const [relevantContributions, setRelevantContributions] = useState([]);
+  const [relevantExpenses, setRelevantExpenses] = useState([]);
+  const [expenseByCategory, setExpenseByCategory] = useState({});
 
-  // Get festival data - if no festivalId, show all festivals summary
-  const festival = festivalId ? festivals.find(f => f.id === festivalId) : null;
-  
-  // Get all verified contributions and expenses
-  const relevantContributions = festivalId 
-    ? contributions.filter(c => c.festivalId === festivalId && c.status === 'verified')
-    : contributions.filter(c => c.status === 'verified');
+  // Fetch data from backend
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        if (useBackend) {
+          // Fetch festival if festivalId provided
+          if (festivalId) {
+            const festivalData = await festivalService.getById(festivalId);
+            setFestival(festivalData);
+            
+            // Fetch contributions for this festival
+            const contribData = await contributionService.getVerified(festivalId);
+            setRelevantContributions(contribData || []);
+            
+            // Fetch expenses for this festival
+            const expenseData = await expenseService.getByFestival(festivalId);
+            setRelevantExpenses(expenseData || []);
+            
+            // Get expense breakdown
+            const breakdown = await expenseService.getBreakdownByFestival(festivalId);
+            setExpenseByCategory(breakdown || {});
+          } else {
+            // Fetch all data
+            const contribData = await contributionService.getRecent();
+            setRelevantContributions((contribData || []).filter(c => c.status === 'VERIFIED' || c.status === 'verified'));
+            
+            const expenseData = await expenseService.getAll();
+            setRelevantExpenses(expenseData || []);
+            
+            // Calculate category breakdown from all expenses
+            const breakdown = (expenseData || []).reduce((acc, e) => {
+              const category = e.category || 'Other';
+              acc[category] = (acc[category] || 0) + parseFloat(e.amount || 0);
+              return acc;
+            }, {});
+            setExpenseByCategory(breakdown);
+          }
+        } else {
+          // Fallback to mock data
+          const mockData = await import('../data/mockData');
+          
+          const festivalData = festivalId 
+            ? mockData.festivals.find(f => f.id === festivalId) 
+            : null;
+          setFestival(festivalData);
+          
+          const contribData = festivalId 
+            ? mockData.contributions.filter(c => c.festivalId === festivalId && c.status === 'verified')
+            : mockData.contributions.filter(c => c.status === 'verified');
+          setRelevantContributions(contribData);
+          
+          const expenseData = festivalId 
+            ? mockData.expenses.filter(e => e.festivalId === festivalId)
+            : mockData.expenses;
+          setRelevantExpenses(expenseData);
+          
+          // Calculate category breakdown
+          const breakdown = expenseData.reduce((acc, e) => {
+            acc[e.category] = (acc[e.category] || 0) + e.amount;
+            return acc;
+          }, {});
+          setExpenseByCategory(breakdown);
+        }
+      } catch (error) {
+        console.error('Error fetching transparency data:', error);
+        // Fallback to mock data on error
+        const mockData = await import('../data/mockData');
+        
+        const festivalData = festivalId 
+          ? mockData.festivals.find(f => f.id === festivalId) 
+          : null;
+        setFestival(festivalData);
+        
+        const contribData = festivalId 
+          ? mockData.contributions.filter(c => c.festivalId === festivalId && c.status === 'verified')
+          : mockData.contributions.filter(c => c.status === 'verified');
+        setRelevantContributions(contribData);
+        
+        const expenseData = festivalId 
+          ? mockData.expenses.filter(e => e.festivalId === festivalId)
+          : mockData.expenses;
+        setRelevantExpenses(expenseData);
+        
+        const breakdown = expenseData.reduce((acc, e) => {
+          acc[e.category] = (acc[e.category] || 0) + e.amount;
+          return acc;
+        }, {});
+        setExpenseByCategory(breakdown);
+      } finally {
+        setLoading(false);
+      }
+    };
     
-  const relevantExpenses = festivalId 
-    ? expenses.filter(e => e.festivalId === festivalId)
-    : expenses;
+    fetchData();
+  }, [festivalId, useBackend]);
 
   // Calculate totals
-  const totalCollection = relevantContributions.reduce((sum, c) => sum + c.amount, 0);
-  const totalExpense = relevantExpenses.reduce((sum, e) => sum + e.amount, 0);
+  const totalCollection = relevantContributions.reduce((sum, c) => sum + parseFloat(c.amount || 0), 0);
+  const totalExpense = relevantExpenses.reduce((sum, e) => sum + parseFloat(e.amount || 0), 0);
   const balance = totalCollection - totalExpense;
-
-  // Group expenses by category
-  const expenseByCategory = relevantExpenses.reduce((acc, e) => {
-    acc[e.category] = (acc[e.category] || 0) + e.amount;
-    return acc;
-  }, {});
 
   // Top contributors
   const contributorTotals = relevantContributions.reduce((acc, c) => {
-    const key = c.userId;
+    const key = c.userId || c.id;
     if (!acc[key]) {
       acc[key] = { 
-        name: c.userName, 
-        nameEn: c.userNameEn, 
+        name: c.userName || c.userNameEn || 'Unknown', 
+        nameEn: c.userNameEn || c.userName || 'Unknown', 
         amount: 0 
       };
     }
-    acc[key].amount += c.amount;
+    acc[key].amount += parseFloat(c.amount || 0);
     return acc;
   }, {});
 
   const topContributors = Object.values(contributorTotals)
     .sort((a, b) => b.amount - a.amount)
     .slice(0, 5);
+
+  // Loading state
+  if (loading) {
+    return (
+      <div className="max-w-5xl mx-auto px-4 py-12 text-center">
+        <Loader2 className="w-8 h-8 animate-spin mx-auto text-primary-500" />
+        <p className="text-earth-500 dark:text-earth-400 mt-4">{t('common.loading')}</p>
+      </div>
+    );
+  }
 
   return (
     <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
