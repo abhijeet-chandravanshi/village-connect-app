@@ -14,7 +14,7 @@ import {
 } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { villageSettings, formatCurrency } from '../data/mockData';
-import { festivalService, contributionService, api } from '../services';
+import { festivalService, contributionService, imageService } from '../services';
 
 function Contribute() {
   const { festivalId } = useParams();
@@ -106,27 +106,29 @@ function Contribute() {
     setLoading(true);
     try {
       if (useBackend) {
-        // Upload proof image first (if backend supports it)
-        let proofImageUrl = null;
-        try {
-          const uploadResponse = await api.upload('/uploads/image', proofImage);
-          if (uploadResponse.success) {
-            proofImageUrl = uploadResponse.data?.url;
-          }
-        } catch (uploadError) {
-          console.log('Image upload not available, proceeding without URL');
-        }
-
-        // Create contribution via backend API
-        await contributionService.create({
+        // Step 1: Create contribution first (to get contribution ID)
+        const contribution = await contributionService.create({
           festivalId: parseInt(festivalId),
           amount: parseFloat(amount),
           paymentMethod: 'UPI',
           transactionId: transactionId || null,
-          proofImageUrl: proofImageUrl,
         });
         
-        toast.success(t('contributions.contributionRecorded'));
+        // Step 2: Upload payment proof image (stored securely in database)
+        if (contribution?.id && proofImage) {
+          try {
+            await imageService.uploadPaymentProof(contribution.id, proofImage);
+            toast.success(t('contributions.contributionRecorded'));
+          } catch (uploadError) {
+            console.log('Payment proof upload failed:', uploadError.message);
+            // Contribution was created, just proof upload failed
+            toast.success(t('contributions.contributionRecorded'));
+            toast.error('Payment proof upload failed. You can upload it later.');
+          }
+        } else {
+          toast.success(t('contributions.contributionRecorded'));
+        }
+        
         setStep(4);
       } else {
         // Mock implementation

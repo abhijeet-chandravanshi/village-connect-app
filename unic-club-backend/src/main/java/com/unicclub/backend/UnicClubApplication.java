@@ -45,24 +45,24 @@ public class UnicClubApplication {
             }
         }
         
-//        if (dotenv != null) {
-//            System.out.println("=== Loading environment variables ===");
-//            dotenv.entries().forEach(entry -> {
-//                String value = entry.getValue();
-//                String displayValue = (entry.getKey().contains("PASSWORD") || entry.getKey().contains("SECRET"))
-//                    ? "****" : value;
-//                System.out.println("Setting: " + entry.getKey() + " = " + displayValue);
-//                System.setProperty(entry.getKey(), value);
-//            });
-//            System.out.println("=====================================");
-//        } else {
-//            System.out.println("WARNING: No .env file found!");
-//            System.out.println("Searched in:");
-//            for (String path : searchPaths) {
-//                System.out.println("  - " + path);
-//            }
-//            System.out.println("Using default values from application.yml");
-//        }
+       if (dotenv != null) {
+           System.out.println("=== Loading environment variables ===");
+           dotenv.entries().forEach(entry -> {
+               String value = entry.getValue();
+               String displayValue = (entry.getKey().contains("PASSWORD") || entry.getKey().contains("SECRET"))
+                   ? "****" : value;
+               //System.out.println("Setting: " + entry.getKey() + " = " + displayValue);
+               System.setProperty(entry.getKey(), value);
+           });
+           System.out.println("=====================================");
+       } else {
+           System.out.println("WARNING: No .env file found!");
+           //System.out.println("Searched in:");
+           for (String path : searchPaths) {
+               //System.out.println("  - " + path);
+           }
+           //System.out.println("Using default values from application.yml");
+       }
         
         SpringApplication.run(UnicClubApplication.class, args);
     }

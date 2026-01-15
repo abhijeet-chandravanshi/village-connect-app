@@ -1,6 +1,8 @@
 package com.unicclub.backend.entity;
 
 import jakarta.persistence.*;
+import jakarta.persistence.Basic;
+import jakarta.persistence.Lob;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.EqualsAndHashCode;
@@ -50,6 +52,18 @@ public class Contribution {
     
     @Column(name = "proof_image_url")
     private String proofImageUrl;
+    
+    // Secure byte array storage for payment proof images
+    @Lob
+    @Basic(fetch = FetchType.LAZY)
+    @Column(name = "proof_image_data", columnDefinition = "BYTEA")
+    private byte[] proofImageData;
+    
+    @Column(name = "proof_image_type", length = 50)
+    private String proofImageType;  // e.g., "image/jpeg", "image/png"
+    
+    @Column(name = "proof_image_name", length = 255)
+    private String proofImageName;  // Original filename
     
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)

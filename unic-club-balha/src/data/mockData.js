@@ -1,3 +1,12 @@
+// ===== IMAGE IMPORTS =====
+import chhatPuja from '../assets/chhat_puja.png';
+import sarswatiPuja from '../assets/sarswati_puja.png';
+import ganpatiPuja from '../assets/ganpati_puja.png';
+import dasahara from '../assets/dasahara.png';
+import diwali1 from '../assets/Diwali1.png';
+import diwali2 from '../assets/diwali2.png';
+import diwali3 from '../assets/dipawli3.png';
+
 // ===== FESTIVALS DATA =====
 export const festivals = [
   {
@@ -12,7 +21,7 @@ export const festivals = [
     status: 'ongoing',
     startDate: '2026-11-07',
     endDate: '2026-11-10',
-    image: 'https://images.unsplash.com/photo-1605649487212-47bdab064df7?w=800',
+    image: chhatPuja,
     contributorCount: 42,
   },
   {
@@ -27,7 +36,7 @@ export const festivals = [
     status: 'completed',
     startDate: '2026-10-01',
     endDate: '2026-10-05',
-    image: 'https://images.unsplash.com/photo-1602216056096-3b40cc0c9944?w=800',
+    image: ganpatiPuja,
     contributorCount: 65,
   },
   {
@@ -42,7 +51,7 @@ export const festivals = [
     status: 'upcoming',
     startDate: '2026-03-14',
     endDate: '2026-03-15',
-    image: 'https://images.unsplash.com/photo-1576444356170-66073046b1bc?w=800',
+    image: dasahara,
     contributorCount: 0,
   },
   {
@@ -57,7 +66,7 @@ export const festivals = [
     status: 'completed',
     startDate: '2026-02-02',
     endDate: '2026-02-02',
-    image: 'https://images.unsplash.com/photo-1567591370504-80134e29fdeb?w=800',
+    image: sarswatiPuja,
     contributorCount: 38,
   },
   {
@@ -72,7 +81,7 @@ export const festivals = [
     status: 'completed',
     startDate: '2025-10-20',
     endDate: '2025-10-22',
-    image: 'https://images.unsplash.com/photo-1574265040831-67b58fc79036?w=800',
+    image: diwali1,
     contributorCount: 58,
   },
 ];
@@ -218,7 +227,7 @@ export const galleryImages = [
     id: '1',
     festivalId: '1',
     festivalName: 'छठ पूजा 2026',
-    imageUrl: 'https://images.unsplash.com/photo-1605649487212-47bdab064df7?w=800',
+    imageUrl: chhatPuja,
     caption: 'संध्या अर्घ्य का दृश्य',
     year: 2026,
   },
@@ -226,7 +235,7 @@ export const galleryImages = [
     id: '2',
     festivalId: '1',
     festivalName: 'छठ पूजा 2026',
-    imageUrl: 'https://images.unsplash.com/photo-1574265040831-67b58fc79036?w=800',
+    imageUrl: diwali2,
     caption: 'दीप सजावट',
     year: 2026,
   },
@@ -234,7 +243,7 @@ export const galleryImages = [
     id: '3',
     festivalId: '2',
     festivalName: 'दुर्गा पूजा 2026',
-    imageUrl: 'https://images.unsplash.com/photo-1602216056096-3b40cc0c9944?w=800',
+    imageUrl: ganpatiPuja,
     caption: 'माँ दुर्गा की प्रतिमा',
     year: 2026,
   },
@@ -242,7 +251,7 @@ export const galleryImages = [
     id: '4',
     festivalId: '2',
     festivalName: 'दुर्गा पूजा 2026',
-    imageUrl: 'https://images.unsplash.com/photo-1567591370504-80134e29fdeb?w=800',
+    imageUrl: dasahara,
     caption: 'पंडाल सजावट',
     year: 2026,
   },
@@ -250,7 +259,7 @@ export const galleryImages = [
     id: '5',
     festivalId: '4',
     festivalName: 'सरस्वती पूजा 2026',
-    imageUrl: 'https://images.unsplash.com/photo-1576444356170-66073046b1bc?w=800',
+    imageUrl: sarswatiPuja,
     caption: 'पूजा स्थल',
     year: 2026,
   },
@@ -258,7 +267,7 @@ export const galleryImages = [
     id: '6',
     festivalId: '5',
     festivalName: 'दीपावली 2025',
-    imageUrl: 'https://images.unsplash.com/photo-1574265040831-67b58fc79036?w=800',
+    imageUrl: diwali3,
     caption: 'दीपावली की रोशनी',
     year: 2025,
   },

@@ -5,5 +5,6 @@ export { default as userService } from './userService';
 export { default as festivalService } from './festivalService';
 export { default as contributionService } from './contributionService';
 export { default as adminService } from './adminService';
+export { default as imageService } from './imageService';
 
 

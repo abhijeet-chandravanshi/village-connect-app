@@ -61,10 +61,10 @@ function Login() {
       {/* Language Toggle */}
       <button
         onClick={() => setLanguage(language === 'hi' ? 'en' : 'hi')}
-        className="absolute top-4 right-4 flex items-center gap-2 px-3 py-2 rounded-xl bg-white/80 dark:bg-earth-800/80 backdrop-blur-sm border border-cream-200 dark:border-earth-700 text-earth-700 dark:text-earth-300 hover:shadow-md transition-all"
+        className="absolute top-4 right-4 flex items-center gap-2 px-3 py-2 rounded-xl bg-white dark:bg-earth-800/80 backdrop-blur-sm border border-cream-200 dark:border-earth-700 text-earth-700 dark:text-earth-300 hover:shadow-md transition-all"
       >
         <Globe className="w-4 h-4" />
-        <span className="text-sm font-medium">{language === 'hi' ? 'EN' : 'हि'}</span>
+        <span className="text-sm font-medium">{language === 'hi' ? 'EN' : 'हिन्दी'}</span>
       </button>
 
       <div className="w-full max-w-md">
@@ -73,10 +73,10 @@ function Login() {
           <div className="w-20 h-20 mx-auto mb-4 rounded-2xl bg-gradient-to-br from-primary-500 to-saffron-500 shadow-warm flex items-center justify-center">
             <span className="text-4xl">🏘️</span>
           </div>
-          <h1 className="text-3xl font-display font-bold text-earth-900 dark:text-cream-100 mb-2">
+          <h1 className="text-3xl font-display font-bold text-earth-800 dark:text-cream-100 mb-2">
             {t('common.appName')}
           </h1>
-          <p className="text-earth-600 dark:text-earth-400">
+          <p className="text-earth-800 dark:text-earth-400">
             {t('login.title')}
           </p>
         </div>

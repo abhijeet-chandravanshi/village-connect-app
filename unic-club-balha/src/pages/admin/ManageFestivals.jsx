@@ -18,7 +18,7 @@ import {
 } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { formatCurrency } from '../../data/mockData';
-import { festivalService, api } from '../../services';
+import { festivalService, imageService } from '../../services';
 
 function ManageFestivals() {
   const { t, language } = useLanguage();
@@ -143,13 +143,20 @@ function ManageFestivals() {
       let imageUrl = formData.imageUrl;
       if (imageFile && useBackend) {
         try {
-          const uploadResponse = await api.upload('/uploads/image', imageFile);
-          if (uploadResponse.success && uploadResponse.data?.url) {
-            imageUrl = uploadResponse.data.url;
+          // Use Cloudinary for festival images
+          const year = formData.startDate ? new Date(formData.startDate).getFullYear() : new Date().getFullYear();
+          const uploadResponse = await imageService.upload(imageFile, `festivals/${year}`);
+          if (uploadResponse?.url) {
+            imageUrl = uploadResponse.url;
           }
         } catch (uploadError) {
-          console.log('Image upload service not available, using preview URL');
-          // For demo/mock, use the preview URL or a placeholder
+          console.log('Cloudinary upload failed, checking if configured...', uploadError.message);
+          // Check if Cloudinary is configured
+          const status = await imageService.checkStatus();
+          if (!status.configured) {
+            toast.error('Cloudinary not configured. Using placeholder image.');
+          }
+          // Use placeholder image
           imageUrl = imagePreview || 'https://images.unsplash.com/photo-1574265040831-67b58fc79036?w=800';
         }
       } else if (imageFile && !useBackend) {

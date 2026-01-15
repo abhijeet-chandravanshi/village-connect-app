@@ -16,7 +16,7 @@ import {
 } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { formatCurrency, formatDateTime } from '../../data/mockData';
-import { contributionService } from '../../services';
+import { contributionService, imageService } from '../../services';
 
 function VerifyContributions() {
   const { t, language } = useLanguage();
@@ -27,11 +27,59 @@ function VerifyContributions() {
   const [loading, setLoading] = useState(null);
   const [contributions, setContributions] = useState([]);
   const [fetchingData, setFetchingData] = useState(true);
+  const [proofImageUrl, setProofImageUrl] = useState(null);
+  const [loadingProof, setLoadingProof] = useState(false);
 
   // Fetch contributions from backend
   useEffect(() => {
     fetchContributions();
   }, [useBackend]);
+
+  // Fetch proof image when contribution is selected
+  useEffect(() => {
+    const fetchProofImage = async () => {
+      if (!selectedContribution) {
+        setProofImageUrl(null);
+        return;
+      }
+
+      // If there's an existing URL (mock data or legacy), use it
+      if (selectedContribution.proofImageUrl) {
+        setProofImageUrl(selectedContribution.proofImageUrl);
+        return;
+      }
+
+      // Try to fetch from API (byte array storage)
+      if (useBackend && selectedContribution.id) {
+        setLoadingProof(true);
+        try {
+          const hasProof = await imageService.hasPaymentProof(selectedContribution.id);
+          if (hasProof) {
+            // Download the image and create blob URL
+            const blob = await imageService.downloadPaymentProof(selectedContribution.id);
+            const url = URL.createObjectURL(blob);
+            setProofImageUrl(url);
+          } else {
+            setProofImageUrl(null);
+          }
+        } catch (error) {
+          console.error('Error fetching proof image:', error);
+          setProofImageUrl(null);
+        } finally {
+          setLoadingProof(false);
+        }
+      }
+    };
+
+    fetchProofImage();
+
+    // Cleanup blob URL when component unmounts or selection changes
+    return () => {
+      if (proofImageUrl && proofImageUrl.startsWith('blob:')) {
+        URL.revokeObjectURL(proofImageUrl);
+      }
+    };
+  }, [selectedContribution, useBackend]);
 
   const fetchContributions = async () => {
     try {
@@ -282,16 +330,25 @@ function VerifyContributions() {
             </div>
 
             {/* Payment Proof */}
-            {selectedContribution.proofImageUrl && (
-              <div>
-                <p className="text-sm text-earth-500 dark:text-earth-400 mb-2">{t('contributions.paymentProof')}</p>
+            <div>
+              <p className="text-sm text-earth-500 dark:text-earth-400 mb-2">{t('contributions.paymentProof')}</p>
+              {loadingProof ? (
+                <div className="flex items-center justify-center py-8 bg-cream-50 dark:bg-earth-800 rounded-xl">
+                  <Loader2 className="w-6 h-6 animate-spin text-primary-500" />
+                  <span className="ml-2 text-earth-500 dark:text-earth-400">Loading proof...</span>
+                </div>
+              ) : proofImageUrl ? (
                 <img
-                  src={selectedContribution.proofImageUrl}
+                  src={proofImageUrl}
                   alt="Payment Proof"
                   className="w-full max-h-64 object-contain rounded-xl border border-cream-200 dark:border-earth-700"
                 />
-              </div>
-            )}
+              ) : (
+                <div className="py-8 text-center bg-cream-50 dark:bg-earth-800 rounded-xl">
+                  <p className="text-earth-500 dark:text-earth-400">No proof image uploaded</p>
+                </div>
+              )}
+            </div>
 
             {/* Actions */}
             {selectedContribution.status === 'pending' && (
