@@ -223,7 +223,7 @@ function VerifyContributions() {
                   <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                     <div className="flex items-start gap-3">
                       <div className="w-12 h-12 rounded-full bg-primary-100 dark:bg-primary-900/40 flex items-center justify-center text-primary-700 dark:text-primary-300 font-bold text-lg">
-                        {contribName[0]}
+                        {[...contribName || ''][0] || '?'}
                       </div>
                       <div>
                         <h3 className="font-semibold text-earth-900 dark:text-cream-100">
@@ -286,7 +286,7 @@ function VerifyContributions() {
             {/* User Info */}
             <div className="flex items-center gap-4 p-4 bg-cream-50 dark:bg-earth-800 rounded-xl">
               <div className="w-14 h-14 rounded-full bg-primary-100 dark:bg-primary-900/40 flex items-center justify-center text-primary-700 dark:text-primary-300 font-bold text-xl">
-                {(language === 'en' ? (selectedContribution.userNameEn || selectedContribution.userName) : selectedContribution.userName)[0]}
+                {[...(language === 'en' ? (selectedContribution.userNameEn || selectedContribution.userName) : selectedContribution.userName) || ''][0] || '?'}
               </div>
               <div>
                 <h3 className="font-semibold text-lg text-earth-900 dark:text-cream-100">

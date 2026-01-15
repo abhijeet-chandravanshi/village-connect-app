@@ -92,7 +92,7 @@ function Navbar() {
             {/* Desktop User Avatar */}
             <Link to="/profile" className="hidden md:flex items-center gap-3 pl-4 border-l border-cream-200 dark:border-earth-700">
               <div className="w-9 h-9 rounded-full bg-gradient-to-br from-primary-400 to-saffron-400 flex items-center justify-center text-white font-semibold hover:shadow-warm transition-shadow cursor-pointer">
-                {(language === 'en' ? (user?.nameEn || user?.name) : user?.name)?.[0] || 'U'}
+                {[...(language === 'en' ? (user?.nameEn || user?.name) : user?.name) || ''][0] || 'U'}
               </div>
             </Link>
           </div>

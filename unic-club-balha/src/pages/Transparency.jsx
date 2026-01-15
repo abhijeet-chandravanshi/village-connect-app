@@ -353,7 +353,7 @@ function Transparency() {
                       <td className="px-4 py-3">
                         <div className="flex items-center gap-2">
                           <div className="w-8 h-8 rounded-full bg-primary-100 dark:bg-primary-900/40 flex items-center justify-center text-primary-700 dark:text-primary-300 font-semibold text-sm">
-                            {displayName[0]}
+                            {[...displayName || ''][0] || '?'}
                           </div>
                           <span className="text-earth-900 dark:text-cream-100">{displayName}</span>
                         </div>

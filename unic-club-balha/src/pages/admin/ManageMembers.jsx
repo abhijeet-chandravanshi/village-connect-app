@@ -179,7 +179,7 @@ function ManageMembers() {
                 >
                   <div className="flex items-center gap-3">
                     <div className="w-12 h-12 rounded-full bg-primary-100 dark:bg-primary-900/40 flex items-center justify-center text-primary-700 dark:text-primary-300 font-bold text-lg">
-                      {memberName[0]}
+                      {[...memberName || ''][0] || '?'}
                     </div>
                     <div>
                       <h3 className="font-semibold text-earth-900 dark:text-cream-100">
@@ -218,7 +218,7 @@ function ManageMembers() {
             {/* Profile Header */}
             <div className="flex items-center gap-4 p-4 bg-cream-50 dark:bg-earth-800 rounded-xl">
               <div className="w-16 h-16 rounded-full bg-primary-100 dark:bg-primary-900/40 flex items-center justify-center text-primary-700 dark:text-primary-300 font-bold text-2xl">
-                {(language === 'en' ? (selectedMember.nameEn || selectedMember.name) : selectedMember.name)[0]}
+                {[...(language === 'en' ? (selectedMember.nameEn || selectedMember.name) : selectedMember.name) || ''][0] || '?'}
               </div>
               <div>
                 <h3 className="font-semibold text-xl text-earth-900 dark:text-cream-100">
