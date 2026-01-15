@@ -244,10 +244,10 @@ function VerifyContributions() {
                         <p className="text-xl font-bold text-earth-900 dark:text-cream-100">
                           {formatCurrency(contrib.amount)}
                         </p>
-                        <Badge variant={contrib.status} size="sm">
-                          {contrib.status === 'pending' ? t('contributions.pending') : 
-                           contrib.status === 'verified' ? t('contributions.verified') : t('contributions.rejected')}
-                        </Badge>
+                      <Badge variant={contrib.status?.toLowerCase()} size="sm">
+                          {contrib.status?.toLowerCase() === 'pending' ? t('contributions.pending') : 
+                           contrib.status?.toLowerCase() === 'verified' ? t('contributions.verified') : t('contributions.rejected')}
+                      </Badge>
                       </div>
 
                       <Button
@@ -308,9 +308,9 @@ function VerifyContributions() {
               </div>
               <div>
                 <p className="text-sm text-earth-500 dark:text-earth-400">{t('common.status')}</p>
-                <Badge variant={selectedContribution.status}>
-                  {selectedContribution.status === 'pending' ? t('contributions.pending') : 
-                   selectedContribution.status === 'verified' ? t('contributions.verified') : t('contributions.rejected')}
+                <Badge variant={selectedContribution.status?.toLowerCase()}>
+                  {selectedContribution.status?.toLowerCase() === 'pending' ? t('contributions.pending') : 
+                   selectedContribution.status?.toLowerCase() === 'verified' ? t('contributions.verified') : t('contributions.rejected')}
                 </Badge>
               </div>
               <div>
@@ -351,7 +351,7 @@ function VerifyContributions() {
             </div>
 
             {/* Actions */}
-            {selectedContribution.status === 'pending' && (
+            {selectedContribution.status?.toLowerCase() === 'pending' && (
               <div className="flex gap-3 pt-4 border-t border-cream-100 dark:border-earth-700">
                 <Button
                   variant="danger"

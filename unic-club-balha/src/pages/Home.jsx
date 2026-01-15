@@ -225,6 +225,7 @@ function Home() {
           {recentContributions.map((contrib) => {
             const contribName = language === 'en' ? (contrib.userNameEn || contrib.userName) : contrib.userName;
             const festName = language === 'en' ? (contrib.festivalNameEn || contrib.festivalName) : contrib.festivalName;
+            const status = contrib.status?.toLowerCase() || 'pending';
             return (
               <div key={contrib.id} className="p-4 flex items-center justify-between">
                 <div className="flex items-center gap-3">
@@ -244,9 +245,9 @@ function Home() {
                   <p className="font-semibold text-earth-900 dark:text-cream-100">
                     {formatCurrency(contrib.amount)}
                   </p>
-                  <Badge variant={contrib.status} size="sm">
-                    {contrib.status === 'pending' ? t('contributions.pending') : 
-                     contrib.status === 'verified' ? t('contributions.verified') : t('contributions.rejected')}
+                  <Badge variant={status} size="sm">
+                    {status === 'pending' ? t('contributions.pending') : 
+                     status === 'verified' ? t('contributions.verified') : t('contributions.rejected')}
                   </Badge>
                 </div>
               </div>
@@ -257,7 +258,7 @@ function Home() {
 
       {/* Admin Quick Access */}
       {isAdmin && (
-        <Link to="/admin-dashboard">
+        <Link to="/admin">
           <Card hoverable className="mt-6">
             <div className="p-4 flex items-center justify-between">
               <div className="flex items-center gap-3">

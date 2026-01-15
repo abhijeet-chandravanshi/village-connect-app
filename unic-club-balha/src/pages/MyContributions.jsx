@@ -59,7 +59,8 @@ function MyContributions() {
   const verifiedCount = myContributions.filter(c => c.status === 'verified' || c.status === 'VERIFIED').length;
 
   const getStatusIcon = (status) => {
-    switch (status) {
+    const s = status?.toLowerCase();
+    switch (s) {
       case 'verified':
         return <CheckCircle className="w-5 h-5 text-leaf-500" />;
       case 'pending':
@@ -67,7 +68,7 @@ function MyContributions() {
       case 'rejected':
         return <XCircle className="w-5 h-5 text-red-500" />;
       default:
-        return null;
+        return <Clock className="w-5 h-5 text-saffron-500" />;
     }
   };
 
@@ -154,15 +155,15 @@ function MyContributions() {
                       <p className="text-xl font-bold text-earth-900 dark:text-cream-100">
                         {formatCurrency(contrib.amount)}
                       </p>
-                      <Badge variant={contrib.status} size="sm">
-                        {contrib.status === 'pending' ? t('contributions.pending') : 
-                         contrib.status === 'verified' ? t('contributions.verified') : t('contributions.rejected')}
+                      <Badge variant={contrib.status?.toLowerCase()} size="sm">
+                        {contrib.status?.toLowerCase() === 'pending' ? t('contributions.pending') : 
+                         contrib.status?.toLowerCase() === 'verified' ? t('contributions.verified') : t('contributions.rejected')}
                       </Badge>
                     </div>
                   </div>
 
                   {/* Additional Details */}
-                  {contrib.status === 'verified' && contrib.verifiedAt && (
+                  {contrib.status?.toLowerCase() === 'verified' && contrib.verifiedAt && (
                     <div className="mt-2 pt-2 border-t border-cream-100 dark:border-earth-700">
                       <p className="text-sm text-leaf-600 dark:text-leaf-400">
                         {t('common.verified')}: {formatDateTime(contrib.verifiedAt)}
@@ -170,10 +171,18 @@ function MyContributions() {
                     </div>
                   )}
 
-                  {contrib.status === 'pending' && (
+                  {contrib.status?.toLowerCase() === 'pending' && (
                     <div className="mt-2 pt-2 border-t border-cream-100 dark:border-earth-700">
                       <p className="text-sm text-saffron-600 dark:text-saffron-400">
                         {t('contributions.verificationPending')}
+                      </p>
+                    </div>
+                  )}
+                  
+                  {contrib.status?.toLowerCase() === 'rejected' && contrib.rejectionReason && (
+                    <div className="mt-2 pt-2 border-t border-cream-100 dark:border-earth-700">
+                      <p className="text-sm text-red-600 dark:text-red-400">
+                        {t('contributions.rejectionReason')}: {contrib.rejectionReason}
                       </p>
                     </div>
                   )}
