@@ -59,7 +59,7 @@ public class NotificationService {
      */
     @Transactional
     public void markAsRead(Long notificationId, User user) {
-        Notification notification = notificationRepository.findById(notificationId)
+        Notification notification = notificationRepository.findByIdWithRelations(notificationId)
                 .orElseThrow(() -> new ResourceNotFoundException("Notification not found"));
         
         // Check if already marked as read
@@ -139,7 +139,7 @@ public class NotificationService {
      * Get notification by ID
      */
     public NotificationResponse getNotificationById(Long id, User user) {
-        Notification notification = notificationRepository.findById(id)
+        Notification notification = notificationRepository.findByIdWithRelations(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Notification not found"));
         
         boolean isRead = notificationReadRepository.existsByNotificationAndUser(notification, user);

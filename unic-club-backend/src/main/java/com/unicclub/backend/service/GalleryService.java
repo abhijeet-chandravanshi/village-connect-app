@@ -114,7 +114,7 @@ public class GalleryService {
      * Get gallery image by ID
      */
     public GalleryImageResponse getImageById(Long id) {
-        GalleryImage image = galleryImageRepository.findById(id)
+        GalleryImage image = galleryImageRepository.findByIdWithRelations(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Gallery image not found"));
         return GalleryImageResponse.fromEntity(image);
     }

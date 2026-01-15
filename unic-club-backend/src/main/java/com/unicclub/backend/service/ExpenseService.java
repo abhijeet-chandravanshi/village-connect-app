@@ -28,7 +28,7 @@ public class ExpenseService {
      * Get all expenses
      */
     public List<ExpenseResponse> getAllExpenses() {
-        return expenseRepository.findAll().stream()
+        return expenseRepository.findAllWithRelations().stream()
                 .map(ExpenseResponse::fromEntity)
                 .collect(Collectors.toList());
     }
@@ -161,7 +161,7 @@ public class ExpenseService {
      * Get expense by ID
      */
     public ExpenseResponse getExpenseById(Long id) {
-        Expense expense = expenseRepository.findById(id)
+        Expense expense = expenseRepository.findByIdWithRelations(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Expense not found"));
         return ExpenseResponse.fromEntity(expense);
     }
