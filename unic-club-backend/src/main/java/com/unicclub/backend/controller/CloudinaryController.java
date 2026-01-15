@@ -2,8 +2,10 @@ package com.unicclub.backend.controller;
 
 import com.unicclub.backend.dto.response.ApiResponse;
 import com.unicclub.backend.dto.response.CloudinaryUploadResponse;
+import com.unicclub.backend.dto.response.GalleryImageResponse;
 import com.unicclub.backend.entity.User;
 import com.unicclub.backend.service.CloudinaryService;
+import com.unicclub.backend.service.GalleryService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -37,6 +39,7 @@ public class CloudinaryController {
     
     private static final Logger log = LoggerFactory.getLogger(CloudinaryController.class);
     private final CloudinaryService cloudinaryService;
+    private final GalleryService galleryService;
     
     @PostMapping("/upload")
     @Operation(summary = "Upload image", description = "Upload an image to a specific folder")
@@ -82,16 +85,32 @@ public class CloudinaryController {
     
     @PostMapping("/gallery")
     @PreAuthorize("hasAnyRole('ADMIN', 'SUPER_ADMIN')")
-    @Operation(summary = "Upload gallery image", description = "Upload image to gallery (Admin only)")
-    public ResponseEntity<ApiResponse<CloudinaryUploadResponse>> uploadGalleryImage(
+    @Operation(summary = "Upload gallery image", description = "Upload image to gallery and save to database (Admin only)")
+    public ResponseEntity<ApiResponse<GalleryUploadResponse>> uploadGalleryImage(
             @AuthenticationPrincipal User admin,
             @RequestParam("file") MultipartFile file,
+            @RequestParam("festivalId") Long festivalId,
             @RequestParam(value = "year", defaultValue = "2026") Integer year,
-            @RequestParam(value = "eventName", defaultValue = "general") String eventName) {
+            @RequestParam(value = "eventName", defaultValue = "general") String eventName,
+            @RequestParam(value = "caption", required = false) String caption) {
         try {
-            CloudinaryUploadResponse response = cloudinaryService.uploadGalleryImage(file, year, eventName);
-            log.info("Gallery image uploaded by admin {}: {}", admin.getId(), response.getPublicId());
-            return ResponseEntity.ok(ApiResponse.success("Gallery image uploaded successfully", response));
+            // Step 1: Upload to Cloudinary
+            CloudinaryUploadResponse cloudinaryResponse = cloudinaryService.uploadGalleryImage(file, year, eventName);
+            log.info("Gallery image uploaded to Cloudinary by admin {}: {}", admin.getId(), cloudinaryResponse.getPublicId());
+            
+            // Step 2: Save record to database
+            GalleryImageResponse galleryRecord = galleryService.createImageWithUrl(
+                    festivalId,
+                    cloudinaryResponse.getUrl(),
+                    caption,
+                    year,
+                    admin
+            );
+            log.info("Gallery image record saved to database: {}", galleryRecord.getId());
+            
+            // Return combined response
+            GalleryUploadResponse response = new GalleryUploadResponse(cloudinaryResponse, galleryRecord);
+            return ResponseEntity.ok(ApiResponse.success("Gallery image uploaded and saved successfully", response));
         } catch (IllegalArgumentException e) {
             return ResponseEntity.badRequest()
                     .body(ApiResponse.error(e.getMessage()));
@@ -99,7 +118,21 @@ public class CloudinaryController {
             log.error("Failed to upload gallery image: {}", e.getMessage());
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                     .body(ApiResponse.error("Failed to upload image"));
+        } catch (Exception e) {
+            log.error("Failed to save gallery image record: {}", e.getMessage());
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(ApiResponse.error("Image uploaded but failed to save record: " + e.getMessage()));
         }
+    }
+    
+    /**
+     * Combined response for gallery upload (Cloudinary + Database record)
+     */
+    @lombok.Data
+    @lombok.AllArgsConstructor
+    public static class GalleryUploadResponse {
+        private CloudinaryUploadResponse cloudinary;
+        private GalleryImageResponse galleryRecord;
     }
     
     @PostMapping("/avatar")

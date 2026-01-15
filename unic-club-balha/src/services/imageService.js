@@ -71,18 +71,29 @@ export const imageService = {
   },
   
   /**
-   * Upload gallery image
+   * Upload gallery image (uploads to Cloudinary AND saves record to database)
    * @param {File} file - Image file
+   * @param {number} festivalId - Festival ID (required)
    * @param {number} year - Year
    * @param {string} eventName - Event name for folder organization
-   * @returns {Promise<{url, thumbnailUrl, publicId}>}
+   * @param {string} caption - Optional caption for the image
+   * @returns {Promise<{cloudinary: {url, thumbnailUrl, publicId}, galleryRecord: {id, imageUrl, ...}}>}
    */
-  uploadGalleryImage: async (file, year = new Date().getFullYear(), eventName = 'general') => {
+  uploadGalleryImage: async (file, festivalId, year = new Date().getFullYear(), eventName = 'general', caption = '') => {
     const formData = new FormData();
     formData.append('file', file);
     
+    const params = new URLSearchParams({
+      festivalId: festivalId.toString(),
+      year: year.toString(),
+      eventName: eventName,
+    });
+    if (caption) {
+      params.append('caption', caption);
+    }
+    
     const response = await fetch(
-      `${API_BASE_URL}/images/gallery?year=${year}&eventName=${encodeURIComponent(eventName)}`,
+      `${API_BASE_URL}/images/gallery?${params.toString()}`,
       {
         method: 'POST',
         headers: {

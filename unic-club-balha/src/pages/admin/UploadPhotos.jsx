@@ -93,16 +93,18 @@ function UploadPhotos() {
       if (useBackend) {
         // Get selected festival details for year and event name
         const festival = festivals.find(f => f.id.toString() === selectedFestival.toString());
+        const festivalId = festival?.id || selectedFestival;
         const year = festival?.year || new Date().getFullYear();
         const eventName = festival?.nameEn || festival?.name || 'general';
 
-        // Upload each image to Cloudinary via backend
+        // Upload each image to Cloudinary AND save to database via backend
         let successCount = 0;
         let failCount = 0;
 
         for (const img of images) {
           try {
-            await imageService.uploadGalleryImage(img.file, year, eventName);
+            // Now passes festivalId to save record in database
+            await imageService.uploadGalleryImage(img.file, festivalId, year, eventName, caption);
             successCount++;
           } catch (uploadError) {
             console.error('Error uploading image:', img.name, uploadError);
