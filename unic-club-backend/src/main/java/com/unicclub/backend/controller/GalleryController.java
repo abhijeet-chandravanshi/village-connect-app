@@ -3,6 +3,7 @@ package com.unicclub.backend.controller;
 import com.unicclub.backend.dto.request.GalleryImageRequest;
 import com.unicclub.backend.dto.response.ApiResponse;
 import com.unicclub.backend.dto.response.GalleryImageResponse;
+import com.unicclub.backend.dto.response.PageResponse;
 import com.unicclub.backend.entity.User;
 import com.unicclub.backend.service.GalleryService;
 import io.swagger.v3.oas.annotations.Operation;
@@ -32,6 +33,15 @@ public class GalleryController {
         return ResponseEntity.ok(ApiResponse.success(images));
     }
     
+    @GetMapping("/pageable")
+    @Operation(summary = "Get all gallery images (pageable)", description = "Get gallery images with pagination support")
+    public ResponseEntity<ApiResponse<PageResponse<GalleryImageResponse>>> getAllImagesPageable(
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "12") int size) {
+        PageResponse<GalleryImageResponse> images = galleryService.getAllImagesPageable(page, size);
+        return ResponseEntity.ok(ApiResponse.success(images));
+    }
+    
     @GetMapping("/year/{year}")
     @Operation(summary = "Get images by year", description = "Get gallery images for a specific year")
     public ResponseEntity<ApiResponse<List<GalleryImageResponse>>> getImagesByYear(@PathVariable Integer year) {
@@ -39,10 +49,30 @@ public class GalleryController {
         return ResponseEntity.ok(ApiResponse.success(images));
     }
     
+    @GetMapping("/year/{year}/pageable")
+    @Operation(summary = "Get images by year (pageable)", description = "Get gallery images for a specific year with pagination")
+    public ResponseEntity<ApiResponse<PageResponse<GalleryImageResponse>>> getImagesByYearPageable(
+            @PathVariable Integer year,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "12") int size) {
+        PageResponse<GalleryImageResponse> images = galleryService.getImagesByYearPageable(year, page, size);
+        return ResponseEntity.ok(ApiResponse.success(images));
+    }
+    
     @GetMapping("/festival/{festivalId}")
     @Operation(summary = "Get images by festival", description = "Get gallery images for a specific festival")
     public ResponseEntity<ApiResponse<List<GalleryImageResponse>>> getImagesByFestival(@PathVariable Long festivalId) {
         List<GalleryImageResponse> images = galleryService.getImagesByFestival(festivalId);
+        return ResponseEntity.ok(ApiResponse.success(images));
+    }
+    
+    @GetMapping("/festival/{festivalId}/pageable")
+    @Operation(summary = "Get images by festival (pageable)", description = "Get gallery images for a specific festival with pagination")
+    public ResponseEntity<ApiResponse<PageResponse<GalleryImageResponse>>> getImagesByFestivalPageable(
+            @PathVariable Long festivalId,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "12") int size) {
+        PageResponse<GalleryImageResponse> images = galleryService.getImagesByFestivalPageable(festivalId, page, size);
         return ResponseEntity.ok(ApiResponse.success(images));
     }
     

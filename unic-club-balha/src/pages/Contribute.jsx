@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { useLanguage } from '../context/LanguageContext';
-import { Card, Button, Input, Badge } from '../components/ui';
+import { Card, Button, Input, Badge, ImageUpload } from '../components/ui';
 import { 
   ArrowLeft, 
   IndianRupee, 
@@ -82,15 +82,8 @@ function Contribute() {
     toast.success(t('common.upiCopied'));
   };
 
-  const handleImageUpload = (e) => {
-    const file = e.target.files[0];
-    if (file) {
-      if (file.size > 5 * 1024 * 1024) {
-        toast.error(`${file.name} ${t('common.fileTooLarge')}`);
-        return;
-      }
-      setProofImage(file);
-    }
+  const handleImageUpload = (fileData) => {
+    setProofImage(fileData.file);
   };
 
   const handleSubmit = async () => {
@@ -330,42 +323,21 @@ function Contribute() {
             </h2>
           </div>
           <div className="p-4 md:p-6 space-y-6">
-            {/* Upload Area */}
+            {/* Enhanced Payment Proof Upload with Preview */}
             <div>
-              <p className="text-sm text-earth-500 dark:text-earth-400 mb-3">{t('contributions.uploadScreenshot')} *</p>
-              <label className="block">
-                <input
-                  type="file"
-                  accept="image/*"
-                  onChange={handleImageUpload}
-                  className="hidden"
-                />
-                <div className={`border-2 border-dashed rounded-2xl p-8 text-center cursor-pointer transition-colors ${
-                  proofImage 
-                    ? 'border-leaf-400 dark:border-leaf-600 bg-leaf-50 dark:bg-leaf-900/20' 
-                    : 'border-cream-300 dark:border-earth-600 hover:border-primary-400 dark:hover:border-primary-500 hover:bg-primary-50 dark:hover:bg-primary-900/20'
-                }`}>
-                  {proofImage ? (
-                    <div>
-                      <CheckCircle className="w-12 h-12 mx-auto text-leaf-500 mb-2" />
-                      <p className="font-medium text-leaf-700 dark:text-leaf-300">{proofImage.name}</p>
-                      <p className="text-sm text-earth-500 dark:text-earth-400 mt-1">
-                        {t('common.clickToChange')}
-                      </p>
-                    </div>
-                  ) : (
-                    <div>
-                      <Upload className="w-12 h-12 mx-auto text-earth-400 mb-2" />
-                      <p className="font-medium text-earth-700 dark:text-earth-300">
-                        {t('common.clickToUpload')}
-                      </p>
-                      <p className="text-sm text-earth-500 dark:text-earth-400 mt-1">
-                        PNG, JPG (max 5MB)
-                      </p>
-                    </div>
-                  )}
-                </div>
-              </label>
+              <p className="text-sm font-medium text-earth-700 dark:text-earth-300 mb-2">
+                {t('contributions.uploadScreenshot')} *
+              </p>
+              <ImageUpload
+                onUpload={handleImageUpload}
+                maxFiles={1}
+                maxSize={5}
+                accept="image/*"
+                showPreview={true}
+                showCropControls={false}
+                uploadText={t('common.clickToUpload')}
+                helperText={`${t('contributions.uploadScreenshot')} - PNG, JPG up to`}
+              />
             </div>
 
             {/* Transaction ID */}

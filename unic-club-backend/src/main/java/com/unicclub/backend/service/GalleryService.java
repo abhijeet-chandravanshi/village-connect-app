@@ -2,6 +2,7 @@ package com.unicclub.backend.service;
 
 import com.unicclub.backend.dto.request.GalleryImageRequest;
 import com.unicclub.backend.dto.response.GalleryImageResponse;
+import com.unicclub.backend.dto.response.PageResponse;
 import com.unicclub.backend.entity.Festival;
 import com.unicclub.backend.entity.GalleryImage;
 import com.unicclub.backend.entity.User;
@@ -9,6 +10,10 @@ import com.unicclub.backend.exception.ResourceNotFoundException;
 import com.unicclub.backend.repository.FestivalRepository;
 import com.unicclub.backend.repository.GalleryImageRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -32,12 +37,34 @@ public class GalleryService {
     }
     
     /**
+     * Get all gallery images with pagination
+     */
+    public PageResponse<GalleryImageResponse> getAllImagesPageable(int page, int size) {
+        Pageable pageable = PageRequest.of(page, size, Sort.by("year").descending().and(Sort.by("createdAt").descending()));
+        Page<GalleryImage> imagePage = galleryImageRepository.findAllWithPagination(pageable);
+        
+        Page<GalleryImageResponse> responsePage = imagePage.map(GalleryImageResponse::fromEntity);
+        return PageResponse.fromPage(responsePage);
+    }
+    
+    /**
      * Get gallery images by year
      */
     public List<GalleryImageResponse> getImagesByYear(Integer year) {
         return galleryImageRepository.findByYear(year).stream()
                 .map(GalleryImageResponse::fromEntity)
                 .collect(Collectors.toList());
+    }
+    
+    /**
+     * Get gallery images by year with pagination
+     */
+    public PageResponse<GalleryImageResponse> getImagesByYearPageable(Integer year, int page, int size) {
+        Pageable pageable = PageRequest.of(page, size, Sort.by("createdAt").descending());
+        Page<GalleryImage> imagePage = galleryImageRepository.findByYearWithPagination(year, pageable);
+        
+        Page<GalleryImageResponse> responsePage = imagePage.map(GalleryImageResponse::fromEntity);
+        return PageResponse.fromPage(responsePage);
     }
     
     /**
@@ -50,6 +77,20 @@ public class GalleryService {
         return galleryImageRepository.findByFestival(festival).stream()
                 .map(GalleryImageResponse::fromEntity)
                 .collect(Collectors.toList());
+    }
+    
+    /**
+     * Get gallery images by festival with pagination
+     */
+    public PageResponse<GalleryImageResponse> getImagesByFestivalPageable(Long festivalId, int page, int size) {
+        Festival festival = festivalRepository.findById(festivalId)
+                .orElseThrow(() -> new ResourceNotFoundException("Festival not found"));
+        
+        Pageable pageable = PageRequest.of(page, size, Sort.by("createdAt").descending());
+        Page<GalleryImage> imagePage = galleryImageRepository.findByFestivalWithPagination(festival, pageable);
+        
+        Page<GalleryImageResponse> responsePage = imagePage.map(GalleryImageResponse::fromEntity);
+        return PageResponse.fromPage(responsePage);
     }
     
     /**

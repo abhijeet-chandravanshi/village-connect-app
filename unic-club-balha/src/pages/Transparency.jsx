@@ -11,7 +11,8 @@ import {
   Users,
   Calendar,
   PieChart,
-  Loader2
+  Loader2,
+  Download
 } from 'lucide-react';
 import { formatCurrency, formatDate } from '../data/mockData';
 import { festivalService, contributionService, expenseService } from '../services';
@@ -146,6 +147,134 @@ function Transparency() {
     .sort((a, b) => b.amount - a.amount)
     .slice(0, 5);
 
+  // Export functions
+  const exportToCSV = (data, filename) => {
+    const csvContent = data.map(row => row.join(',')).join('\n');
+    const blob = new Blob(['\uFEFF' + csvContent], { type: 'text/csv;charset=utf-8;' });
+    const link = document.createElement('a');
+    const url = URL.createObjectURL(blob);
+    link.setAttribute('href', url);
+    link.setAttribute('download', filename);
+    link.style.visibility = 'hidden';
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
+
+  const handleExportOverview = () => {
+    const festivalName = festival 
+      ? (language === 'en' ? festival.nameEn : festival.name).replace(/[^a-zA-Z0-9]/g, '_')
+      : 'All_Festivals';
+    
+    const data = [
+      ['Transparency Report'],
+      ['Festival', festival ? (language === 'en' ? festival.nameEn : festival.name) : 'All Festivals'],
+      ['Date', new Date().toLocaleDateString()],
+      [''],
+      ['Summary'],
+      ['Total Collection', totalCollection],
+      ['Total Expense', totalExpense],
+      ['Balance', balance],
+      [''],
+      ['Top Contributors'],
+      ['Rank', 'Name', 'Amount'],
+      ...topContributors.map((c, idx) => [
+        idx + 1, 
+        language === 'en' ? (c.nameEn || c.name) : c.name, 
+        c.amount
+      ]),
+      [''],
+      ['Expense Breakdown'],
+      ['Category', 'Amount'],
+      ...Object.entries(expenseByCategory).map(([cat, amt]) => [cat, amt])
+    ];
+    
+    exportToCSV(data, `${festivalName}_Transparency_Report_${new Date().toISOString().split('T')[0]}.csv`);
+  };
+
+  const handleExportContributions = () => {
+    const festivalName = festival 
+      ? (language === 'en' ? festival.nameEn : festival.name).replace(/[^a-zA-Z0-9]/g, '_')
+      : 'All_Festivals';
+    
+    const data = [
+      ['Contributions Report'],
+      ['Festival', festival ? (language === 'en' ? festival.nameEn : festival.name) : 'All Festivals'],
+      ['Date', new Date().toLocaleDateString()],
+      ['Total Collection', totalCollection],
+      [''],
+      ['Contributor', 'Amount', 'Date'],
+      ...relevantContributions.map(c => [
+        language === 'en' ? (c.userNameEn || c.userName) : c.userName,
+        c.amount,
+        new Date(c.createdAt).toLocaleDateString()
+      ])
+    ];
+    
+    exportToCSV(data, `${festivalName}_Contributions_${new Date().toISOString().split('T')[0]}.csv`);
+  };
+
+  const handleExportExpenses = () => {
+    const festivalName = festival 
+      ? (language === 'en' ? festival.nameEn : festival.name).replace(/[^a-zA-Z0-9]/g, '_')
+      : 'All_Festivals';
+    
+    const data = [
+      ['Expenses Report'],
+      ['Festival', festival ? (language === 'en' ? festival.nameEn : festival.name) : 'All Festivals'],
+      ['Date', new Date().toLocaleDateString()],
+      ['Total Expense', totalExpense],
+      [''],
+      ['Description', 'Paid To', 'Category', 'Amount', 'Date'],
+      ...relevantExpenses.map(e => [
+        e.description,
+        e.paidTo,
+        e.category,
+        e.amount,
+        new Date(e.createdAt).toLocaleDateString()
+      ])
+    ];
+    
+    exportToCSV(data, `${festivalName}_Expenses_${new Date().toISOString().split('T')[0]}.csv`);
+  };
+
+  const handleExportAll = () => {
+    const festivalName = festival 
+      ? (language === 'en' ? festival.nameEn : festival.name).replace(/[^a-zA-Z0-9]/g, '_')
+      : 'All_Festivals';
+    
+    const data = [
+      ['Complete Transparency Report'],
+      ['Festival', festival ? (language === 'en' ? festival.nameEn : festival.name) : 'All Festivals'],
+      ['Date', new Date().toLocaleDateString()],
+      [''],
+      ['Financial Summary'],
+      ['Total Collection', totalCollection],
+      ['Total Expense', totalExpense],
+      ['Balance', balance],
+      [''],
+      ['All Contributions'],
+      ['Contributor', 'Amount', 'Date'],
+      ...relevantContributions.map(c => [
+        language === 'en' ? (c.userNameEn || c.userName) : c.userName,
+        c.amount,
+        new Date(c.createdAt).toLocaleDateString()
+      ]),
+      [''],
+      ['All Expenses'],
+      ['Description', 'Paid To', 'Category', 'Amount', 'Date'],
+      ...relevantExpenses.map(e => [
+        e.description,
+        e.paidTo,
+        e.category,
+        e.amount,
+        new Date(e.createdAt).toLocaleDateString()
+      ])
+    ];
+    
+    exportToCSV(data, `${festivalName}_Complete_Report_${new Date().toISOString().split('T')[0]}.csv`);
+  };
+
   // Loading state
   if (loading) {
     return (
@@ -168,15 +297,60 @@ function Transparency() {
       </Link>
 
       {/* Header */}
-      <div className="mb-6">
-        <h1 className="text-2xl md:text-3xl font-display font-bold text-earth-900 dark:text-cream-100 mb-2">
-          {t('transparency.title')}
-        </h1>
-        <p className="text-earth-600 dark:text-earth-400">
-          {festival 
-            ? (language === 'en' ? festival.nameEn : festival.name) 
-            : t('transparency.allFestivalsReport')}
-        </p>
+      <div className="mb-6 flex items-start justify-between gap-4">
+        <div>
+          <h1 className="text-2xl md:text-3xl font-display font-bold text-earth-900 dark:text-cream-100 mb-2">
+            {t('transparency.title')}
+          </h1>
+          <p className="text-earth-600 dark:text-earth-400">
+            {festival 
+              ? (language === 'en' ? festival.nameEn : festival.name) 
+              : t('transparency.allFestivalsReport')}
+          </p>
+        </div>
+        
+        {/* Export Button */}
+        <div className="relative group">
+          <Button
+            variant="secondary"
+            leftIcon={<Download className="w-4 h-4" />}
+            className="whitespace-nowrap"
+          >
+            {language === 'hi' ? 'निर्यात' : 'Export'}
+          </Button>
+          
+          {/* Dropdown Menu */}
+          <div className="absolute right-0 mt-2 w-56 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 z-10">
+            <Card className="shadow-lg">
+              <div className="py-2">
+                <button
+                  onClick={handleExportAll}
+                  className="w-full px-4 py-2 text-left text-sm text-earth-700 dark:text-earth-300 hover:bg-cream-100 dark:hover:bg-earth-700 transition-colors"
+                >
+                  {language === 'hi' ? 'पूरी रिपोर्ट' : 'Complete Report'}
+                </button>
+                <button
+                  onClick={handleExportOverview}
+                  className="w-full px-4 py-2 text-left text-sm text-earth-700 dark:text-earth-300 hover:bg-cream-100 dark:hover:bg-earth-700 transition-colors"
+                >
+                  {language === 'hi' ? 'अवलोकन' : 'Overview'}
+                </button>
+                <button
+                  onClick={handleExportContributions}
+                  className="w-full px-4 py-2 text-left text-sm text-earth-700 dark:text-earth-300 hover:bg-cream-100 dark:hover:bg-earth-700 transition-colors"
+                >
+                  {language === 'hi' ? 'योगदान' : 'Contributions'}
+                </button>
+                <button
+                  onClick={handleExportExpenses}
+                  className="w-full px-4 py-2 text-left text-sm text-earth-700 dark:text-earth-300 hover:bg-cream-100 dark:hover:bg-earth-700 transition-colors"
+                >
+                  {language === 'hi' ? 'खर्च' : 'Expenses'}
+                </button>
+              </div>
+            </Card>
+          </div>
+        </div>
       </div>
 
       {/* Summary Cards */}
@@ -242,7 +416,7 @@ function Transparency() {
             </div>
             <div className="h-4 bg-cream-200 dark:bg-earth-700 rounded-full overflow-hidden">
               <div 
-                className="h-full bg-gradient-to-r from-primary-500 to-saffron-500 rounded-full transition-all"
+                className="h-full bg-linear-to-r from-primary-500 to-saffron-500 rounded-full transition-all"
                 style={{ width: `${Math.min((totalCollection / festival.expectedBudget) * 100, 100)}%` }}
               />
             </div>
@@ -274,7 +448,99 @@ function Transparency() {
 
       {/* Overview Tab */}
       {activeTab === 'overview' && (
-        <div className="grid md:grid-cols-2 gap-6">
+        <div className="space-y-6">
+          {/* Collection vs Expense Comparison */}
+          <Card>
+            <div className="p-4 border-b border-cream-100 dark:border-earth-700">
+              <h3 className="font-semibold text-earth-900 dark:text-cream-100">
+                {language === 'hi' ? 'संग्रह बनाम खर्च' : 'Collection vs Expense'}
+              </h3>
+            </div>
+            <div className="p-6">
+              <div className="space-y-4">
+                {/* Collection Bar */}
+                <div>
+                  <div className="flex justify-between mb-2">
+                    <span className="text-sm font-medium text-earth-700 dark:text-earth-300">
+                      {t('festivals.collection')}
+                    </span>
+                    <span className="text-sm font-bold text-leaf-600 dark:text-leaf-400">
+                      {formatCurrency(totalCollection)}
+                    </span>
+                  </div>
+                  <div className="h-8 bg-cream-200 dark:bg-earth-700 rounded-lg overflow-hidden">
+                    <div 
+                      className="h-full bg-linear-to-r from-leaf-500 to-leaf-600 flex items-center justify-end px-3 transition-all"
+                      style={{ width: `${totalCollection > 0 ? Math.max((totalCollection / Math.max(totalCollection, totalExpense)) * 100, 5) : 0}%` }}
+                    >
+                      <span className="text-xs font-bold text-white">
+                        {Math.round((totalCollection / Math.max(totalCollection, totalExpense)) * 100)}%
+                      </span>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Expense Bar */}
+                <div>
+                  <div className="flex justify-between mb-2">
+                    <span className="text-sm font-medium text-earth-700 dark:text-earth-300">
+                      {t('festivals.expense')}
+                    </span>
+                    <span className="text-sm font-bold text-saffron-600 dark:text-saffron-400">
+                      {formatCurrency(totalExpense)}
+                    </span>
+                  </div>
+                  <div className="h-8 bg-cream-200 dark:bg-earth-700 rounded-lg overflow-hidden">
+                    <div 
+                      className="h-full bg-linear-to-r from-saffron-500 to-saffron-600 flex items-center justify-end px-3 transition-all"
+                      style={{ width: `${totalExpense > 0 ? Math.max((totalExpense / Math.max(totalCollection, totalExpense)) * 100, 5) : 0}%` }}
+                    >
+                      <span className="text-xs font-bold text-white">
+                        {Math.round((totalExpense / Math.max(totalCollection, totalExpense)) * 100)}%
+                      </span>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Balance Indicator */}
+                <div className={`mt-4 p-4 rounded-xl ${
+                  balance > 0 
+                    ? 'bg-leaf-50 dark:bg-leaf-900/20 border border-leaf-200 dark:border-leaf-800' 
+                    : balance < 0 
+                    ? 'bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800'
+                    : 'bg-cream-100 dark:bg-earth-800 border border-cream-200 dark:border-earth-700'
+                }`}>
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm font-medium text-earth-700 dark:text-earth-300">
+                      {balance > 0 
+                        ? (language === 'hi' ? 'शेष राशि' : 'Remaining Balance')
+                        : balance < 0 
+                        ? (language === 'hi' ? 'घाटा' : 'Deficit')
+                        : (language === 'hi' ? 'संतुलित' : 'Balanced')}
+                    </span>
+                    <span className={`text-lg font-bold ${
+                      balance > 0 
+                        ? 'text-leaf-600 dark:text-leaf-400' 
+                        : balance < 0 
+                        ? 'text-red-600 dark:text-red-400'
+                        : 'text-earth-600 dark:text-earth-400'
+                    }`}>
+                      {formatCurrency(Math.abs(balance))}
+                    </span>
+                  </div>
+                  {balance < 0 && (
+                    <p className="text-xs text-red-600 dark:text-red-400 mt-2">
+                      {language === 'hi' 
+                        ? 'खर्च संग्रह से अधिक है' 
+                        : 'Expenses exceed collection'}
+                    </p>
+                  )}
+                </div>
+              </div>
+            </div>
+          </Card>
+
+          <div className="grid md:grid-cols-2 gap-6">
           {/* Top Contributors */}
           <Card>
             <div className="p-4 border-b border-cream-100 dark:border-earth-700">
@@ -324,12 +590,26 @@ function Transparency() {
               ))}
             </div>
           </Card>
+          </div>
         </div>
       )}
 
       {/* Contributions Tab */}
       {activeTab === 'contributions' && (
         <Card>
+          <div className="p-4 border-b border-cream-100 dark:border-earth-700 flex items-center justify-between">
+            <h3 className="font-semibold text-earth-900 dark:text-cream-100">
+              {language === 'hi' ? 'सभी योगदान' : 'All Contributions'} ({relevantContributions.length})
+            </h3>
+            <Button
+              variant="secondary"
+              size="sm"
+              onClick={handleExportContributions}
+              leftIcon={<Download className="w-4 h-4" />}
+            >
+              {language === 'hi' ? 'निर्यात' : 'Export'}
+            </Button>
+          </div>
           <div className="overflow-x-auto">
             <table className="w-full">
               <thead className="bg-cream-50 dark:bg-earth-800">
@@ -376,6 +656,19 @@ function Transparency() {
       {/* Expenses Tab */}
       {activeTab === 'expenses' && (
         <Card>
+          <div className="p-4 border-b border-cream-100 dark:border-earth-700 flex items-center justify-between">
+            <h3 className="font-semibold text-earth-900 dark:text-cream-100">
+              {language === 'hi' ? 'सभी खर्च' : 'All Expenses'} ({relevantExpenses.length})
+            </h3>
+            <Button
+              variant="secondary"
+              size="sm"
+              onClick={handleExportExpenses}
+              leftIcon={<Download className="w-4 h-4" />}
+            >
+              {language === 'hi' ? 'निर्यात' : 'Export'}
+            </Button>
+          </div>
           <div className="overflow-x-auto">
             <table className="w-full">
               <thead className="bg-cream-50 dark:bg-earth-800">

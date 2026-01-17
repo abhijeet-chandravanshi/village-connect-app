@@ -8,7 +8,9 @@ import {
   Download, 
   Calendar,
   SlidersHorizontal,
-  Loader2
+  Loader2,
+  ChevronLeft,
+  ChevronRight
 } from 'lucide-react';
 import { galleryService, festivalService } from '../services';
 
@@ -21,35 +23,58 @@ function Gallery() {
   const [galleryImages, setGalleryImages] = useState([]);
   const [festivals, setFestivals] = useState([]);
   const [loading, setLoading] = useState(true);
+  
+  // Pagination state
+  const [currentPage, setCurrentPage] = useState(0);
+  const [pageSize] = useState(12);
+  const [totalPages, setTotalPages] = useState(0);
+  const [totalElements, setTotalElements] = useState(0);
 
   // Fetch gallery images and festivals
   useEffect(() => {
     fetchData();
-  }, [useBackend]);
+  }, [useBackend, currentPage, yearFilter, festivalFilter]);
 
   const fetchData = async () => {
+    setLoading(true);
     try {
       if (useBackend) {
-        // Try to fetch from API
+        // Try to fetch from API with pagination
         try {
-          const [imagesData, festivalsData] = await Promise.all([
-            galleryService.getAll(),
-            festivalService.getAll()
-          ]);
-          setGalleryImages(imagesData || []);
+          const festivalsData = await festivalService.getAll();
           setFestivals(festivalsData || []);
+          
+          let imagesResponse;
+          if (festivalFilter !== 'all') {
+            // Fetch by festival with pagination
+            imagesResponse = await galleryService.getByFestivalPageable(festivalFilter, currentPage, pageSize);
+          } else if (yearFilter !== 'all') {
+            // Fetch by year with pagination
+            imagesResponse = await galleryService.getByYearPageable(parseInt(yearFilter), currentPage, pageSize);
+          } else {
+            // Fetch all with pagination
+            imagesResponse = await galleryService.getAllPageable(currentPage, pageSize);
+          }
+          
+          setGalleryImages(imagesResponse.content || []);
+          setTotalPages(imagesResponse.totalPages || 0);
+          setTotalElements(imagesResponse.totalElements || 0);
         } catch (apiError) {
           console.log('API call failed, using mock data:', apiError);
           // Fall back to mock data if API not available
           const mockData = await import('../data/mockData');
           setGalleryImages(mockData.galleryImages);
           setFestivals(mockData.festivals);
+          setTotalPages(1);
+          setTotalElements(mockData.galleryImages.length);
         }
       } else {
         // Use mock data
         const mockData = await import('../data/mockData');
         setGalleryImages(mockData.galleryImages);
         setFestivals(mockData.festivals);
+        setTotalPages(1);
+        setTotalElements(mockData.galleryImages.length);
       }
     } catch (error) {
       console.error('Error fetching gallery data:', error);
@@ -57,18 +82,25 @@ function Gallery() {
       const mockData = await import('../data/mockData');
       setGalleryImages(mockData.galleryImages);
       setFestivals(mockData.festivals);
+      setTotalPages(1);
+      setTotalElements(mockData.galleryImages.length);
     } finally {
       setLoading(false);
     }
   };
 
-  const years = [...new Set(galleryImages.map(img => img.year))].sort((a, b) => b - a);
-
-  const filteredImages = galleryImages.filter(img => {
-    const matchYear = yearFilter === 'all' || img.year.toString() === yearFilter;
-    const matchFestival = festivalFilter === 'all' || img.festivalId === festivalFilter;
-    return matchYear && matchFestival;
-  });
+  const years = [...new Set(festivals.map(f => f.year))].sort((a, b) => b - a);
+  
+  // Reset to first page when filters change
+  const handleYearFilterChange = (year) => {
+    setYearFilter(year);
+    setCurrentPage(0);
+  };
+  
+  const handleFestivalFilterChange = (festivalId) => {
+    setFestivalFilter(festivalId);
+    setCurrentPage(0);
+  };
 
   const handleDownload = (imageUrl, caption) => {
     const link = document.createElement('a');
@@ -109,7 +141,7 @@ function Gallery() {
             <Calendar className="w-5 h-5 text-earth-400" />
             <select
               value={yearFilter}
-              onChange={(e) => setYearFilter(e.target.value)}
+              onChange={(e) => handleYearFilterChange(e.target.value)}
               className="input-field"
             >
               <option value="all">{t('common.all')} {t('common.year')}</option>
@@ -124,7 +156,7 @@ function Gallery() {
             <SlidersHorizontal className="w-5 h-5 text-earth-400" />
             <select
               value={festivalFilter}
-              onChange={(e) => setFestivalFilter(e.target.value)}
+              onChange={(e) => handleFestivalFilterChange(e.target.value)}
               className="input-field"
             >
               <option value="all">{t('common.all')} {t('nav.festivals')}</option>
@@ -139,9 +171,10 @@ function Gallery() {
       </Card>
 
       {/* Image Grid */}
-      {filteredImages.length > 0 ? (
-        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-          {filteredImages.map((image) => (
+      {galleryImages.length > 0 ? (
+        <>
+          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+            {galleryImages.map((image) => (
             <div
               key={image.id}
               className="relative group cursor-pointer overflow-hidden rounded-2xl shadow-soft hover:shadow-warm transition-shadow"
@@ -154,7 +187,7 @@ function Gallery() {
                   className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
                 />
               </div>
-              <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity">
+              <div className="absolute inset-0 bg-linear-to-t from-black/60 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity">
                 <div className="absolute bottom-0 left-0 right-0 p-3">
                   <p className="text-white text-sm font-medium truncate">{image.caption}</p>
                   <p className="text-white/70 text-xs">{image.year}</p>
@@ -162,7 +195,75 @@ function Gallery() {
               </div>
             </div>
           ))}
-        </div>
+          </div>
+          
+          {/* Pagination Controls */}
+          {totalPages > 1 && (
+            <Card className="mt-6">
+              <div className="p-4 flex items-center justify-between">
+                {/* Page Info */}
+                <div className="text-sm text-earth-600 dark:text-earth-400">
+                  {language === 'hi' 
+                    ? `पृष्ठ ${currentPage + 1} / ${totalPages} (कुल ${totalElements} छवियाँ)` 
+                    : `Page ${currentPage + 1} of ${totalPages} (${totalElements} total images)`}
+                </div>
+                
+                {/* Pagination Buttons */}
+                <div className="flex items-center gap-2">
+                  <Button
+                    variant="secondary"
+                    size="sm"
+                    onClick={() => setCurrentPage(prev => Math.max(0, prev - 1))}
+                    disabled={currentPage === 0}
+                    leftIcon={<ChevronLeft className="w-4 h-4" />}
+                  >
+                    {language === 'hi' ? 'पिछला' : 'Previous'}
+                  </Button>
+                  
+                  {/* Page Numbers */}
+                  <div className="hidden sm:flex items-center gap-1">
+                    {Array.from({ length: Math.min(totalPages, 5) }, (_, i) => {
+                      let pageNum;
+                      if (totalPages <= 5) {
+                        pageNum = i;
+                      } else if (currentPage < 3) {
+                        pageNum = i;
+                      } else if (currentPage > totalPages - 4) {
+                        pageNum = totalPages - 5 + i;
+                      } else {
+                        pageNum = currentPage - 2 + i;
+                      }
+                      
+                      return (
+                        <button
+                          key={pageNum}
+                          onClick={() => setCurrentPage(pageNum)}
+                          className={`w-8 h-8 rounded-lg font-medium transition-colors ${
+                            currentPage === pageNum
+                              ? 'bg-primary-500 text-white'
+                              : 'bg-cream-100 dark:bg-earth-700 text-earth-700 dark:text-earth-300 hover:bg-cream-200 dark:hover:bg-earth-600'
+                          }`}
+                        >
+                          {pageNum + 1}
+                        </button>
+                      );
+                    })}
+                  </div>
+                  
+                  <Button
+                    variant="secondary"
+                    size="sm"
+                    onClick={() => setCurrentPage(prev => Math.min(totalPages - 1, prev + 1))}
+                    disabled={currentPage >= totalPages - 1}
+                    rightIcon={<ChevronRight className="w-4 h-4" />}
+                  >
+                    {language === 'hi' ? 'अगला' : 'Next'}
+                  </Button>
+                </div>
+              </div>
+            </Card>
+          )}
+        </>
       ) : (
         <Card>
           <div className="py-12 text-center">
