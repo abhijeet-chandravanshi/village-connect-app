@@ -20,14 +20,27 @@ function Notifications() {
     unreadCount, 
     markAsRead, 
     markAllAsRead,
-    refreshNotifications 
+    refreshNotifications,
+    refreshUnreadCount
   } = useNotifications();
   const [loading, setLoading] = useState(true);
 
-  // Initial load
+  // Refresh data when user visits notifications page
   useEffect(() => {
-    refreshNotifications().finally(() => setLoading(false));
-  }, [refreshNotifications]);
+    const loadData = async () => {
+      setLoading(true);
+      try {
+        await Promise.all([
+          refreshNotifications(),
+          refreshUnreadCount()
+        ]);
+      } finally {
+        setLoading(false);
+      }
+    };
+    
+    loadData();
+  }, [refreshNotifications, refreshUnreadCount]);
 
   const getIcon = (type) => {
     switch (type) {
@@ -114,9 +127,11 @@ function Notifications() {
             <Card
               key={notif.id}
               className={`cursor-pointer transition-all ${
-                !notif.isRead ? 'ring-2 ring-primary-200 dark:ring-primary-800' : ''
+                !notif.isRead 
+                  ? 'ring-2 ring-primary-200 dark:ring-primary-800 bg-primary-50/30 dark:bg-primary-900/10' 
+                  : 'hover:bg-cream-50 dark:hover:bg-earth-800/50'
               }`}
-              onClick={() => markAsRead(notif.id)}
+              onClick={() => !notif.isRead && markAsRead(notif.id)}
             >
               <div className="p-4 flex gap-4">
                 <div className={`w-12 h-12 rounded-xl flex items-center justify-center shrink-0 ${getIconBg(notif.type)}`}>

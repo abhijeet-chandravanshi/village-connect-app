@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { useLanguage } from '../../context/LanguageContext';
 import { useAuth } from '../../context/AuthContext';
-import { Card, Button, Input, Modal } from '../../components/ui';
+import { Card, Button, Input, Modal, ImageUpload } from '../../components/ui';
 import { 
   ArrowLeft,
   Plus,
@@ -16,7 +16,7 @@ import {
   TrendingDown
 } from 'lucide-react';
 import toast from 'react-hot-toast';
-import { festivalService, expenseService } from '../../services';
+import { festivalService, expenseService, imageService } from '../../services';
 import { formatCurrency, formatDate } from '../../data/mockData';
 
 function ManageExpenses() {
@@ -30,6 +30,8 @@ function ManageExpenses() {
   const [editingExpense, setEditingExpense] = useState(null);
   const [festivalFilter, setFestivalFilter] = useState('all');
   const [categoryFilter, setCategoryFilter] = useState('all');
+  const [receiptFile, setReceiptFile] = useState(null);
+  const [uploadingReceipt, setUploadingReceipt] = useState(false);
 
   // Form state
   const [formData, setFormData] = useState({
@@ -119,12 +121,16 @@ function ManageExpenses() {
         receiptUrl: ''
       });
     }
+    setReceiptFile(null);
+    setUploadingReceipt(false);
     setShowModal(true);
   };
 
   const handleCloseModal = () => {
     setShowModal(false);
     setEditingExpense(null);
+    setReceiptFile(null);
+    setUploadingReceipt(false);
     setFormData({
       festivalId: '',
       description: '',
@@ -154,6 +160,24 @@ function ManageExpenses() {
 
     setActionLoading(editingExpense ? 'edit' : 'add');
     try {
+      let receiptUrl = formData.receiptUrl;
+
+      // Upload receipt image if a new file is selected
+      if (receiptFile && receiptFile.file) {
+        setUploadingReceipt(true);
+        try {
+          const uploadResult = await imageService.upload(receiptFile.file, 'receipts');
+          receiptUrl = uploadResult.url;
+          toast.success(language === 'hi' ? 'रसीद अपलोड की गई' : 'Receipt uploaded');
+        } catch (uploadError) {
+          console.error('Error uploading receipt:', uploadError);
+          toast.error(language === 'hi' ? 'रसीद अपलोड विफल' : 'Receipt upload failed');
+          // Continue without receipt URL
+        } finally {
+          setUploadingReceipt(false);
+        }
+      }
+
       if (useBackend) {
         const expenseData = {
           festivalId: parseInt(formData.festivalId),
@@ -162,7 +186,7 @@ function ManageExpenses() {
           amount: parseFloat(formData.amount),
           paidTo: formData.paidTo,
           expenseDate: formData.expenseDate,
-          receiptUrl: formData.receiptUrl
+          receiptUrl: receiptUrl
         };
 
         if (editingExpense) {
@@ -184,6 +208,7 @@ function ManageExpenses() {
       toast.error(error.message || (language === 'hi' ? 'त्रुटि' : 'Error'));
     } finally {
       setActionLoading(null);
+      setUploadingReceipt(false);
     }
   };
 
@@ -504,14 +529,41 @@ function ManageExpenses() {
             leftIcon={<Calendar className="w-5 h-5" />}
           />
 
-          {/* Receipt URL (Optional) */}
-          <Input
-            label={`${language === 'hi' ? 'रसीद URL' : 'Receipt URL'} (${t('common.optional')})`}
-            placeholder="https://..."
-            value={formData.receiptUrl}
-            onChange={(e) => setFormData({ ...formData, receiptUrl: e.target.value })}
-            helperText={language === 'hi' ? 'रसीद छवि का लिंक' : 'Link to receipt image'}
-          />
+          {/* Receipt Upload (Optional) */}
+          <div>
+            <label className="block text-sm font-medium text-earth-700 dark:text-earth-300 mb-2">
+              {language === 'hi' ? 'रसीद अपलोड करें' : 'Upload Receipt'} ({t('common.optional')})
+            </label>
+            <ImageUpload
+              onUpload={(file) => setReceiptFile(file)}
+              maxFiles={1}
+              maxSize={5}
+              accept="image/*"
+              showCropControls={false}
+              uploadText={language === 'hi' ? 'रसीद अपलोड करें' : 'Upload receipt'}
+              helperText={language === 'hi' ? 'PNG, JPG अधिकतम' : 'PNG, JPG up to'}
+            />
+            {uploadingReceipt && (
+              <p className="text-sm text-primary-600 dark:text-primary-400 mt-2">
+                {language === 'hi' ? 'अपलोड हो रहा है...' : 'Uploading...'}
+              </p>
+            )}
+            {formData.receiptUrl && !receiptFile && (
+              <div className="mt-2">
+                <p className="text-sm text-earth-500 dark:text-earth-400 mb-1">
+                  {language === 'hi' ? 'मौजूदा रसीद:' : 'Existing receipt:'}
+                </p>
+                <a
+                  href={formData.receiptUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-sm text-primary-600 dark:text-primary-400 hover:underline"
+                >
+                  {language === 'hi' ? 'रसीद देखें' : 'View receipt'}
+                </a>
+              </div>
+            )}
+          </div>
 
           {/* Actions */}
           <div className="flex gap-3 pt-4">

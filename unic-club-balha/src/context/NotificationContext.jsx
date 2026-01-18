@@ -63,7 +63,7 @@ export function NotificationProvider({ children }) {
 
   // Mark notification as read
   const markAsRead = useCallback(async (notificationId) => {
-    // Optimistic update
+    // Optimistic update - update UI immediately
     setNotifications(prev => prev.map(n => 
       n.id === notificationId ? { ...n, isRead: true } : n
     ));
@@ -72,45 +72,52 @@ export function NotificationProvider({ children }) {
     if (useBackend) {
       try {
         await notificationService.markAsRead(notificationId);
+        // Refresh to ensure backend and frontend are in sync
+        await fetchUnreadCount();
       } catch (error) {
         console.error('Error marking notification as read:', error);
         // Revert on error
-        fetchNotifications();
-        fetchUnreadCount();
+        await fetchNotifications();
+        await fetchUnreadCount();
       }
     }
   }, [useBackend, fetchNotifications, fetchUnreadCount]);
 
   // Mark all as read
   const markAllAsRead = useCallback(async () => {
-    // Optimistic update
+    // Optimistic update - update UI immediately
     setNotifications(prev => prev.map(n => ({ ...n, isRead: true })));
     setUnreadCount(0);
 
     if (useBackend) {
       try {
         await notificationService.markAllAsRead();
+        // Refresh to ensure backend and frontend are in sync
+        await fetchUnreadCount();
       } catch (error) {
         console.error('Error marking all notifications as read:', error);
         // Revert on error
-        fetchNotifications();
-        fetchUnreadCount();
+        await fetchNotifications();
+        await fetchUnreadCount();
       }
     }
   }, [useBackend, fetchNotifications, fetchUnreadCount]);
 
-  // Initial fetch and polling
+  // Initial fetch only (NO automatic polling)
   useEffect(() => {
+    if (!user) return;
+
+    // Fetch once when user logs in
     fetchUnreadCount();
     fetchNotifications();
-
-    // Poll for new notifications every 30 seconds
-    const interval = setInterval(() => {
-      fetchUnreadCount();
-    }, 30000);
-
-    return () => clearInterval(interval);
-  }, [fetchUnreadCount, fetchNotifications]);
+    
+    // No polling - updates happen when:
+    // 1. User navigates to notifications page (manual refresh)
+    // 2. User marks notifications as read (optimistic update)
+    // 3. Manual refresh is called
+    
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [user]);
 
   const value = {
     unreadCount,
