@@ -9,7 +9,7 @@ import {
   Image as ImageIcon,
   Loader2
 } from 'lucide-react';
-import { Button } from './Button';
+import Button from './Button';
 
 /**
  * Enhanced Image Upload Component with:

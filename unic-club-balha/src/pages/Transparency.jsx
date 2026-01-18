@@ -310,46 +310,18 @@ function Transparency() {
         </div>
         
         {/* Export Button */}
-        <div className="relative group">
+        <div className="relative">
           <Button
             variant="secondary"
             leftIcon={<Download className="w-4 h-4" />}
             className="whitespace-nowrap"
+            onClick={() => {
+              // Quick export all on click
+              handleExportAll();
+            }}
           >
             {language === 'hi' ? 'निर्यात' : 'Export'}
           </Button>
-          
-          {/* Dropdown Menu */}
-          <div className="absolute right-0 mt-2 w-56 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 z-10">
-            <Card className="shadow-lg">
-              <div className="py-2">
-                <button
-                  onClick={handleExportAll}
-                  className="w-full px-4 py-2 text-left text-sm text-earth-700 dark:text-earth-300 hover:bg-cream-100 dark:hover:bg-earth-700 transition-colors"
-                >
-                  {language === 'hi' ? 'पूरी रिपोर्ट' : 'Complete Report'}
-                </button>
-                <button
-                  onClick={handleExportOverview}
-                  className="w-full px-4 py-2 text-left text-sm text-earth-700 dark:text-earth-300 hover:bg-cream-100 dark:hover:bg-earth-700 transition-colors"
-                >
-                  {language === 'hi' ? 'अवलोकन' : 'Overview'}
-                </button>
-                <button
-                  onClick={handleExportContributions}
-                  className="w-full px-4 py-2 text-left text-sm text-earth-700 dark:text-earth-300 hover:bg-cream-100 dark:hover:bg-earth-700 transition-colors"
-                >
-                  {language === 'hi' ? 'योगदान' : 'Contributions'}
-                </button>
-                <button
-                  onClick={handleExportExpenses}
-                  className="w-full px-4 py-2 text-left text-sm text-earth-700 dark:text-earth-300 hover:bg-cream-100 dark:hover:bg-earth-700 transition-colors"
-                >
-                  {language === 'hi' ? 'खर्च' : 'Expenses'}
-                </button>
-              </div>
-            </Card>
-          </div>
         </div>
       </div>
 

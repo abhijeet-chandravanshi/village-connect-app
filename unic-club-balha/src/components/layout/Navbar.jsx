@@ -1,6 +1,7 @@
 import { Link, useLocation } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import { useLanguage } from '../../context/LanguageContext';
+import { useNotifications } from '../../context/NotificationContext';
 import { SettingsDropdown } from '../ui';
 import { 
   Home, 
@@ -13,21 +14,19 @@ import {
   X
 } from 'lucide-react';
 import { useState } from 'react';
-import { notifications } from '../../data/mockData';
 
 function Navbar() {
   const { user, isAdmin } = useAuth();
   const { t, language } = useLanguage();
+  const { unreadCount } = useNotifications();
   const location = useLocation();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-
-  const unreadNotifications = notifications.filter(n => !n.isRead).length;
 
   const navLinks = [
     { to: '/', icon: Home, label: t('nav.home') },
     { to: '/festivals', icon: Calendar, label: t('nav.festivals') },
     { to: '/gallery', icon: Image, label: t('nav.gallery') },
-    { to: '/notifications', icon: Bell, label: t('nav.notifications'), badge: unreadNotifications },
+    { to: '/notifications', icon: Bell, label: t('nav.notifications'), badge: unreadCount },
     { to: '/profile', icon: User, label: t('nav.profile') },
   ];
 
@@ -46,7 +45,7 @@ function Navbar() {
         <div className="flex items-center justify-between h-16">
           {/* Logo */}
           <Link to="/" className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-primary-500 to-saffron-500 flex items-center justify-center text-white font-bold text-lg shadow-warm">
+            <div className="w-10 h-10 rounded-xl bg-linear-to-br from-primary-500 to-saffron-500 flex items-center justify-center text-white font-bold text-lg shadow-warm">
               UC
             </div>
             <span className="font-display font-bold text-xl text-earth-900 dark:text-cream-100 hidden sm:block">
@@ -66,11 +65,11 @@ function Navbar() {
                     : 'text-earth-600 dark:text-earth-400 hover:text-earth-900 dark:hover:text-cream-100 hover:bg-cream-100 dark:hover:bg-earth-800'
                 }`}
               >
-                <link.icon className="w-5 h-5" />
+                <link.icon className={`w-5 h-5 ${link.badge > 0 && link.to === '/notifications' ? 'animate-pulse' : ''}`} />
                 <span className="hidden lg:inline">{link.label}</span>
                 {link.badge > 0 && (
-                  <span className="absolute -top-1 -right-1 w-5 h-5 bg-primary-500 text-white text-xs font-bold rounded-full flex items-center justify-center">
-                    {link.badge}
+                  <span className="absolute -top-1 -right-1 w-5 h-5 bg-primary-500 text-white text-xs font-bold rounded-full flex items-center justify-center animate-pulse shadow-warm">
+                    {link.badge > 9 ? '9+' : link.badge}
                   </span>
                 )}
               </Link>
@@ -91,7 +90,7 @@ function Navbar() {
             
             {/* Desktop User Avatar */}
             <Link to="/profile" className="hidden md:flex items-center gap-3 pl-4 border-l border-cream-200 dark:border-earth-700">
-              <div className="w-9 h-9 rounded-full bg-gradient-to-br from-primary-400 to-saffron-400 flex items-center justify-center text-white font-semibold hover:shadow-warm transition-shadow cursor-pointer">
+              <div className="w-9 h-9 rounded-full bg-linear-to-br from-primary-400 to-saffron-400 flex items-center justify-center text-white font-semibold hover:shadow-warm transition-shadow cursor-pointer">
                 {[...(language === 'en' ? (user?.nameEn || user?.name) : user?.name) || ''][0] || 'U'}
               </div>
             </Link>

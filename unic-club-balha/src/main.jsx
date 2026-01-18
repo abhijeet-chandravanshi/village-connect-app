@@ -6,6 +6,7 @@ import App from './App.jsx';
 import { AuthProvider } from './context/AuthContext';
 import { LanguageProvider } from './context/LanguageContext';
 import { ThemeProvider } from './context/ThemeContext';
+import { NotificationProvider } from './context/NotificationContext';
 import './i18n'; // Initialize i18next
 import './index.css';
 
@@ -15,8 +16,9 @@ createRoot(document.getElementById('root')).render(
       <ThemeProvider>
         <LanguageProvider>
           <AuthProvider>
-    <App />
-            <Toaster
+            <NotificationProvider>
+              <App />
+              <Toaster
               position="top-center"
               toastOptions={{
                 duration: 3000,
@@ -40,7 +42,8 @@ createRoot(document.getElementById('root')).render(
                   },
                 },
               }}
-            />
+              />
+            </NotificationProvider>
           </AuthProvider>
         </LanguageProvider>
       </ThemeProvider>

@@ -1,6 +1,7 @@
 import { Link, useLocation } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import { useLanguage } from '../../context/LanguageContext';
+import { useNotifications } from '../../context/NotificationContext';
 import { 
   Home, 
   Calendar, 
@@ -8,20 +9,18 @@ import {
   User, 
   Bell
 } from 'lucide-react';
-import { notifications } from '../../data/mockData';
 
 function BottomNav() {
   const { user } = useAuth();
   const { t } = useLanguage();
+  const { unreadCount } = useNotifications();
   const location = useLocation();
-
-  const unreadNotifications = notifications.filter(n => !n.isRead).length;
 
   const navLinks = [
     { to: '/', icon: Home, label: t('nav.home') },
     { to: '/festivals', icon: Calendar, label: t('nav.festivals') },
     { to: '/gallery', icon: Image, label: t('nav.gallery') },
-    { to: '/notifications', icon: Bell, label: t('nav.notifications'), badge: unreadNotifications },
+    { to: '/notifications', icon: Bell, label: t('nav.notifications'), badge: unreadCount },
     { to: '/profile', icon: User, label: t('nav.profile') },
   ];
 
@@ -46,9 +45,9 @@ function BottomNav() {
             <div className={`relative p-1.5 rounded-lg ${
               isActive(link.to) ? 'bg-primary-100 dark:bg-primary-900/40' : ''
             }`}>
-              <link.icon className="w-5 h-5" />
+              <link.icon className={`w-5 h-5 ${link.badge > 0 && link.to === '/notifications' ? 'animate-pulse' : ''}`} />
               {link.badge > 0 && (
-                <span className="absolute -top-1 -right-1 w-4 h-4 bg-primary-500 text-white text-[10px] font-bold rounded-full flex items-center justify-center">
+                <span className="absolute -top-1 -right-1 w-4 h-4 bg-primary-500 text-white text-[10px] font-bold rounded-full flex items-center justify-center animate-pulse">
                   {link.badge > 9 ? '9+' : link.badge}
                 </span>
               )}

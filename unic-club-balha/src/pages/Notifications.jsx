@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useLanguage } from '../context/LanguageContext';
-import { useAuth } from '../context/AuthContext';
+import { useNotifications } from '../context/NotificationContext';
 import { Card, Badge, Button } from '../components/ui';
 import { 
   Bell, 
@@ -12,38 +12,22 @@ import {
   Circle,
   Loader2
 } from 'lucide-react';
-import { notificationService } from '../services';
 
 function Notifications() {
   const { t, language } = useLanguage();
-  const { useBackend } = useAuth();
-  const [notifList, setNotifList] = useState([]);
+  const { 
+    notifications: notifList, 
+    unreadCount, 
+    markAsRead, 
+    markAllAsRead,
+    refreshNotifications 
+  } = useNotifications();
   const [loading, setLoading] = useState(true);
 
-  // Fetch notifications from backend
+  // Initial load
   useEffect(() => {
-    const fetchNotifications = async () => {
-      try {
-        if (useBackend) {
-          const data = await notificationService.getMyNotifications();
-          setNotifList(data || []);
-        } else {
-          // Fallback to mock data
-          const { notifications: mockNotifications } = await import('../data/mockData');
-          setNotifList(mockNotifications);
-        }
-      } catch (error) {
-        console.error('Error fetching notifications:', error);
-        // Fallback to mock data on error
-        const { notifications: mockNotifications } = await import('../data/mockData');
-        setNotifList(mockNotifications);
-      } finally {
-        setLoading(false);
-      }
-    };
-    
-    fetchNotifications();
-  }, [useBackend]);
+    refreshNotifications().finally(() => setLoading(false));
+  }, [refreshNotifications]);
 
   const getIcon = (type) => {
     switch (type) {
@@ -71,37 +55,6 @@ function Notifications() {
     }
   };
 
-  const markAsRead = async (id) => {
-    // Optimistic update
-    setNotifList(notifList.map(n => 
-      n.id === id ? { ...n, isRead: true } : n
-    ));
-    
-    // Call API
-    if (useBackend) {
-      try {
-        await notificationService.markAsRead(id);
-      } catch (error) {
-        console.error('Error marking notification as read:', error);
-      }
-    }
-  };
-
-  const markAllRead = async () => {
-    // Optimistic update
-    setNotifList(notifList.map(n => ({ ...n, isRead: true })));
-    
-    // Call API
-    if (useBackend) {
-      try {
-        await notificationService.markAllAsRead();
-      } catch (error) {
-        console.error('Error marking all notifications as read:', error);
-      }
-    }
-  };
-
-  const unreadCount = notifList.filter(n => !n.isRead).length;
 
   const formatNotifTime = (dateString) => {
     const date = new Date(dateString);
@@ -139,7 +92,7 @@ function Notifications() {
           </p>
         </div>
         {unreadCount > 0 && (
-          <Button variant="secondary" size="sm" onClick={markAllRead}>
+          <Button variant="secondary" size="sm" onClick={markAllAsRead}>
             {t('notifications.markAllRead')}
           </Button>
         )}
@@ -166,7 +119,7 @@ function Notifications() {
               onClick={() => markAsRead(notif.id)}
             >
               <div className="p-4 flex gap-4">
-                <div className={`w-12 h-12 rounded-xl flex items-center justify-center flex-shrink-0 ${getIconBg(notif.type)}`}>
+                <div className={`w-12 h-12 rounded-xl flex items-center justify-center shrink-0 ${getIconBg(notif.type)}`}>
                   {getIcon(notif.type)}
                 </div>
                 <div className="flex-1 min-w-0">
@@ -177,7 +130,7 @@ function Notifications() {
                       {notif.title}
                     </h3>
                     {!notif.isRead && (
-                      <Circle className="w-3 h-3 fill-primary-500 text-primary-500 flex-shrink-0" />
+                      <Circle className="w-3 h-3 fill-primary-500 text-primary-500 shrink-0" />
                     )}
                   </div>
                   <p className="text-sm text-earth-600 dark:text-earth-400 line-clamp-2 mb-2">

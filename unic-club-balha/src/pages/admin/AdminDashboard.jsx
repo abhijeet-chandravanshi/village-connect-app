@@ -12,6 +12,7 @@ import {
   CheckCircle,
   AlertCircle,
   TrendingUp,
+  TrendingDown,
   ChevronRight,
   Loader2
 } from 'lucide-react';
@@ -93,6 +94,13 @@ function AdminDashboard() {
       description: t('admin.addEditFestivals'),
       icon: Calendar,
       to: '/admin/manage-festivals',
+      color: 'saffron',
+    },
+    {
+      title: language === 'hi' ? 'खर्च प्रबंधन' : 'Manage Expenses',
+      description: language === 'hi' ? 'खर्च जोड़ें और ट्रैक करें' : 'Add and track expenses',
+      icon: TrendingDown,
+      to: '/admin/manage-expenses',
       color: 'saffron',
     },
     {

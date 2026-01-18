@@ -21,6 +21,7 @@ import Transparency from './pages/Transparency';
 import AdminDashboard from './pages/admin/AdminDashboard';
 import VerifyContributions from './pages/admin/VerifyContributions';
 import ManageFestivals from './pages/admin/ManageFestivals';
+import ManageExpenses from './pages/admin/ManageExpenses';
 import UploadPhotos from './pages/admin/UploadPhotos';
 import SendNotification from './pages/admin/SendNotification';
 import ManageMembers from './pages/admin/ManageMembers';
@@ -30,7 +31,7 @@ function LoadingScreen() {
   return (
     <div className="min-h-screen bg-cream-50 flex items-center justify-center">
       <div className="text-center">
-        <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-gradient-to-br from-primary-500 to-saffron-500 animate-pulse flex items-center justify-center">
+        <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-linear-to-br from-primary-500 to-saffron-500 animate-pulse flex items-center justify-center">
           <span className="text-white font-bold text-xl">UC</span>
         </div>
         <p className="text-earth-600 animate-pulse">लोड हो रहा है...</p>
@@ -141,6 +142,14 @@ function App() {
           element={
             <ProtectedRoute adminOnly>
               <ManageFestivals />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="admin/manage-expenses"
+          element={
+            <ProtectedRoute adminOnly>
+              <ManageExpenses />
             </ProtectedRoute>
           }
         />
