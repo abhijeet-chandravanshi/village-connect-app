@@ -79,10 +79,24 @@ function Notifications() {
 
   const formatNotifTime = (dateString) => {
     try {
-      const date = new Date(dateString);
+      // Handle backend format: 2026-01-18T07:17:42.026634 (with microseconds)
+      // Replace microseconds with milliseconds for JavaScript Date compatibility
+      let normalizedDateString = dateString;
+      if (typeof dateString === 'string' && dateString.includes('.')) {
+        const [datePart, timePart] = dateString.split('T');
+        if (timePart) {
+          const [time, fraction] = timePart.split('.');
+          // Convert microseconds to milliseconds (take first 3 digits)
+          const milliseconds = fraction ? fraction.substring(0, 3) : '000';
+          normalizedDateString = `${datePart}T${time}.${milliseconds}`;
+        }
+      }
+      
+      const date = new Date(normalizedDateString);
       
       // Check if date is valid
       if (isNaN(date.getTime())) {
+        console.warn('Invalid date:', dateString);
         return language === 'hi' ? 'अभी' : 'now';
       }
       
@@ -114,7 +128,7 @@ function Notifications() {
       const years = Math.floor(days / 365);
       return `${years} ${language === 'hi' ? 'साल पहले' : 'year' + (years > 1 ? 's' : '') + ' ago'}`;
     } catch (error) {
-      console.error('Error formatting notification time:', error);
+      console.error('Error formatting notification time:', error, dateString);
       return language === 'hi' ? 'अभी' : 'now';
     }
   };
