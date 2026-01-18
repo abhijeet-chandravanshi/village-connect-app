@@ -72,13 +72,17 @@ export function NotificationProvider({ children }) {
     if (useBackend) {
       try {
         await notificationService.markAsRead(notificationId);
-        // Refresh to ensure backend and frontend are in sync
-        await fetchUnreadCount();
+        // Don't refetch - keep the optimistic update
+        // The state is already correct in the UI
       } catch (error) {
         console.error('Error marking notification as read:', error);
-        // Revert on error
-        await fetchNotifications();
-        await fetchUnreadCount();
+        // Revert on error - refetch from backend
+        try {
+          await fetchNotifications();
+          await fetchUnreadCount();
+        } catch (refetchError) {
+          console.error('Error refetching notifications:', refetchError);
+        }
       }
     }
   }, [useBackend, fetchNotifications, fetchUnreadCount]);
@@ -92,13 +96,17 @@ export function NotificationProvider({ children }) {
     if (useBackend) {
       try {
         await notificationService.markAllAsRead();
-        // Refresh to ensure backend and frontend are in sync
-        await fetchUnreadCount();
+        // Don't refetch - keep the optimistic update
+        // The state is already correct in the UI
       } catch (error) {
         console.error('Error marking all notifications as read:', error);
-        // Revert on error
-        await fetchNotifications();
-        await fetchUnreadCount();
+        // Revert on error - refetch from backend
+        try {
+          await fetchNotifications();
+          await fetchUnreadCount();
+        } catch (refetchError) {
+          console.error('Error refetching notifications:', refetchError);
+        }
       }
     }
   }, [useBackend, fetchNotifications, fetchUnreadCount]);
