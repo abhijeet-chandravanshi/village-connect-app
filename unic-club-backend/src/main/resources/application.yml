@@ -26,6 +26,17 @@ springdoc:
   swagger-ui:
     path: /swagger-ui.html
 
+# Actuator Configuration
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health
+      base-path: /actuator
+  endpoint:
+    health:
+      show-details: when-authorized
+
 # Cloudinary Configuration (for public images)
 cloudinary:
   cloud-name: ${CLOUDINARY_CLOUD_NAME:}

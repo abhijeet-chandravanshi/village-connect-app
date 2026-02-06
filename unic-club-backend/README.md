@@ -60,6 +60,11 @@ The server will start at `http://localhost:8080`
 
 ## 📚 API Endpoints
 
+### Health Check
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| GET/HEAD/POST | `/actuator/health` | Health check endpoint (accepts any HTTP method) |
+
 ### Authentication
 | Method | Endpoint | Description |
 |--------|----------|-------------|

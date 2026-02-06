@@ -43,6 +43,7 @@ public class SecurityConfig {
                 .requestMatchers("/api/auth/**").permitAll()
                 .requestMatchers("/swagger-ui/**", "/api-docs/**", "/swagger-ui.html").permitAll()
                 .requestMatchers("/h2-console/**").permitAll()
+                .requestMatchers("/actuator/health/**").permitAll()
                 
                 // Public read endpoints
                 .requestMatchers(HttpMethod.GET, "/api/festivals/**").permitAll()
